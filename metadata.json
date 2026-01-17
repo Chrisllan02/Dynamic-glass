@@ -1,0 +1,9 @@
+{
+  "name": "Dynamic glass",
+  "description": "Uma interface de 'Nova Guia' minimalista com efeitos de vidro líquido (Glassmorphism), fundos animados e integração com Gemini para produtividade.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

@@ -1,0 +1,66 @@
+
+{
+  "manifest_version": 3,
+  "name": "< Chris /> - Liquid Glass Extension",
+  "version": "1.1.0",
+  "description": "Uma interface de Nova Guia minimalista com efeitos de vidro líquido, fundos animados e integração com Gemini para produtividade.",
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "permissions": [
+    "storage",
+    "geolocation",
+    "bookmarks",
+    "topSites",
+    "scripting",
+    "tabs",
+    "clipboardRead"
+  ],
+  "host_permissions": [
+    "https://api.open-meteo.com/*",
+    "https://geocoding-api.open-meteo.com/*",
+    "https://suggestqueries.google.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://t2.gstatic.com/*",
+    "https://ui-avatars.com/*",
+    "https://assets.mixkit.co/*",
+    "https://cdn.pixabay.com/*",
+    "https://images.unsplash.com/*",
+    "https://ipapi.co/*",
+    "https://s3-us-west-2.amazonaws.com/*",
+    "*://*/*.ics",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*", "icons/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'unsafe-eval' https://cdn.tailwindcss.com https://aistudiocdn.com https://cdn.jsdelivr.net; object-src 'self'; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://suggestqueries.google.com https://generativelanguage.googleapis.com https://t2.gstatic.com https://ipapi.co; img-src 'self' https: data:; style-src 'self' 'unsafe-inline' https:; font-src 'self' https:; frame-src 'self' https://my.spline.design;"
+  }
+}
