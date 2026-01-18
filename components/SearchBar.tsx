@@ -1,5 +1,6 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { uiSounds } from '../services/soundService';
 
 interface SearchBarProps {
   isDarkMode?: boolean;
@@ -106,6 +107,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({ isDarkMode = true }) => {
       }
   };
 
+  const handleAiSearch = (e: React.MouseEvent) => {
+      e.preventDefault();
+      uiSounds.click();
+      window.dispatchEvent(new CustomEvent('lumina-ai-search', { 
+          detail: { query: query } 
+      }));
+  };
+
   return (
     <div className="relative w-full max-w-[600px] mx-auto z-50" ref={containerRef}>
       <div className={`transition-all duration-500 ${isFocused ? 'scale-[1.02]' : ''}`}>
@@ -143,7 +152,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({ isDarkMode = true }) => {
             )}
             <button type="button" className={`p-2 transition-all rounded-full ${isListening ? 'bg-red-500 text-white animate-pulse' : (isDarkMode ? 'text-white/40 hover:text-white hover:bg-white/10' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100')}`} onClick={toggleVoiceSearch}><span className="material-symbols-outlined !text-[20px]">{isListening ? 'mic_off' : 'mic'}</span></button>
             
-             <a href="https://gemini.google.com/app" className="ai-mode-button ml-2" target="_blank" rel="noreferrer">
+             <button 
+                onClick={handleAiSearch}
+                className="ai-mode-button ml-2" 
+                type="button"
+                title="Pesquisar com IA (Google Search Data)"
+             >
                 <div className="gradient-layer">
                     <div className="rotating-gradient"></div>
                 </div>
@@ -151,15 +165,13 @@ export const SearchBar: React.FC<SearchBarProps> = ({ isDarkMode = true }) => {
                 <div className="button-content">
                   <div className="icon">
                     <svg viewBox="0 0 24 24" fill="currentColor">
-                        {/* Lupa */}
                         <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                        {/* Brilho IA (Sparkle) */}
                         <path d="M19 3l-1.6 3.6L14 8l3.4 1.4L19 13l1.6-3.6L24 8l-3.4-1.4z"/>
                     </svg>
                   </div>
                   <div className="label">Modo IA</div>
                 </div>
-             </a>
+             </button>
           </div>
         </form>
 

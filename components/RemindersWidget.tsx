@@ -70,7 +70,11 @@ export const RemindersWidget: React.FC<RemindersWidgetProps> = ({ isDarkMode, fo
   const activeCount = reminders.filter(t => !t.completed).length;
 
   return (
-    <div className="flex flex-col items-start gap-2 animate-[fadeIn_1s_ease-out] pointer-events-auto">
+    <div 
+        className="flex flex-col items-start gap-2 animate-[fadeIn_1s_ease-out] pointer-events-auto"
+        onMouseEnter={() => setExpanded(true)}
+        onMouseLeave={() => setExpanded(false)}
+    >
         <GlassCard 
             isDarkMode={isDarkMode}
             interactive

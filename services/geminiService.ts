@@ -85,19 +85,52 @@ export const getTechFact = async (): Promise<TechFactData> => {
   }
 };
 
-export const getChatResponse = async (message: string, history: { role: string, text: string }[], systemContext?: string): Promise<string> => {
+export const getChatResponse = async (
+  message: string, 
+  history: { role: string, text: string }[], 
+  systemContext?: string,
+  mode: 'search' | 'think' = 'search'
+): Promise<{ text: string, sources?: { title: string, uri: string }[] }> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
     const formattedHistory = history.map(msg => ({ role: msg.role === 'user' ? 'user' : 'model', parts: [{ text: msg.text }] }));
+    
+    let model = "gemini-3-flash-preview";
+    let config: any = {
+        systemInstruction: systemContext || "Você é o < Chris /> AI, um assistente pessoal inteligente integrado a uma Nova Guia do navegador. Seja conciso, útil e amigável.",
+    };
+
+    if (mode === 'think') {
+        // Thinking Mode for complex reasoning
+        model = "gemini-3-pro-preview";
+        config.thinkingConfig = { thinkingBudget: 32768 };
+    } else {
+        // Search Grounding Mode (Default)
+        config.tools = [{ googleSearch: {} }];
+    }
+
     const chat = ai.chats.create({
-      model: "gemini-3-flash-preview",
+      model: model,
       history: formattedHistory as any,
-      config: { systemInstruction: systemContext || "Você é o < Chris /> AI, um assistente pessoal inteligente integrado a uma Nova Guia do navegador. Seja conciso, útil e amigável." }
+      config: config
     });
+    
     const result = await chat.sendMessage({ message });
-    return result.text || "";
+    
+    let sources: { title: string, uri: string }[] = [];
+    
+    // Extract Grounding Data (Only relevant in search mode)
+    const chunks = result.candidates?.[0]?.groundingMetadata?.groundingChunks;
+    if (chunks) {
+        sources = chunks
+            .filter((c: any) => c.web)
+            .map((c: any) => ({ title: c.web.title, uri: c.web.uri }));
+    }
+
+    return { text: result.text || "", sources: sources.length > 0 ? sources : undefined };
   } catch (error) {
-    return "Desculpe, não consegui processar agora.";
+    console.error(error);
+    return { text: "Desculpe, não consegui processar agora." };
   }
 };
 

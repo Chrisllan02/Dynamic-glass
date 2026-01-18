@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { IslandConfig, IslandState, ChatMessage, CalendarEvent } from '../types';
 import { uiSounds } from '../services/soundService';
@@ -50,6 +51,7 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [isThinkingMode, setIsThinkingMode] = useState(false); // Toggle for Deep Research
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Timer Edit State
@@ -100,6 +102,20 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
       };
       window.addEventListener('lumina-update' as any, handleFocusUpdate as any);
       return () => window.removeEventListener('lumina-update' as any, handleFocusUpdate as any);
+  }, []);
+
+  // Listen for AI Search Trigger (from SearchBar)
+  useEffect(() => {
+      const handleAiSearch = (e: CustomEvent) => {
+          const query = e.detail.query;
+          handleStateChange('ask-ai');
+          if (query) {
+              setChatInput(query);
+              setTimeout(() => handleChatSend(undefined, query), 500); // Small delay to allow UI transition
+          }
+      };
+      window.addEventListener('lumina-ai-search' as any, handleAiSearch as any);
+      return () => window.removeEventListener('lumina-ai-search' as any, handleAiSearch as any);
   }, []);
 
   // Initialize: Load last state
@@ -300,15 +316,16 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
       }, 450); 
   };
 
-  const handleChatSend = async (e?: React.FormEvent) => {
+  const handleChatSend = async (e?: React.FormEvent, overrideInput?: string) => {
       e?.preventDefault();
-      if (!chatInput.trim() || isChatLoading) return;
+      const input = overrideInput || chatInput;
+      if (!input.trim() || isChatLoading) return;
       uiSounds.click();
 
       const userMsg: ChatMessage = {
           id: Date.now().toString(),
           role: 'user',
-          text: chatInput,
+          text: input,
           timestamp: Date.now()
       };
 
@@ -321,9 +338,16 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
           const response = await getChatResponse(
               userMsg.text, 
               history, 
-              "Você é o assistente da Ilha Dinâmica. Responda de forma extremamente concisa, direta e útil (máx 3 frases). Use emojis."
+              "Você é o assistente da Ilha Dinâmica. Responda de forma extremamente concisa, direta e útil. Use emojis. Se estiver no modo de pesquisa, priorize fontes recentes.",
+              isThinkingMode ? 'think' : 'search'
           );
-          setChatMessages(prev => [...prev, { id: Date.now().toString(), role: 'model', text: response, timestamp: Date.now() }]);
+          setChatMessages(prev => [...prev, { 
+              id: Date.now().toString(), 
+              role: 'model', 
+              text: response.text, 
+              timestamp: Date.now(),
+              sources: response.sources 
+          }]);
           uiSounds.success();
       } catch (err) {
           setChatMessages(prev => [...prev, { id: Date.now().toString(), role: 'model', text: "Erro ao conectar.", timestamp: Date.now() }]);
@@ -638,482 +662,6 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
                     </div>
                 )}
 
-                {/* CALCULATOR APP */}
-                {state === 'calculator' && (
-                    <div className="w-full h-full p-5 bg-[#1c1c1e] flex flex-col justify-between">
-                        <BackButton />
-                        
-                        {/* Display */}
-                        <div className="flex flex-col items-end justify-end mt-10 mb-4 px-2">
-                            <span className="text-white/40 text-sm font-medium tracking-wider h-6">{calcHistory}</span>
-                            <span className="text-5xl font-light text-white tracking-tight truncate w-full text-right">{calcDisplay}</span>
-                        </div>
-
-                        {/* Keypad */}
-                        <div className="grid grid-cols-4 gap-3 flex-1">
-                            {[
-                                { l: 'AC', c: 'bg-gray-400 text-black font-bold' }, { l: 'DEL', c: 'bg-gray-400 text-black font-bold', op: 'backspace' }, { l: '%', c: 'bg-gray-400 text-black font-bold' }, { l: '/', c: 'bg-orange-500 text-white font-bold text-xl' },
-                                { l: '7', c: 'bg-[#333] text-white' }, { l: '8', c: 'bg-[#333] text-white' }, { l: '9', c: 'bg-[#333] text-white' }, { l: '*', c: 'bg-orange-500 text-white font-bold text-xl' },
-                                { l: '4', c: 'bg-[#333] text-white' }, { l: '5', c: 'bg-[#333] text-white' }, { l: '6', c: 'bg-[#333] text-white' }, { l: '-', c: 'bg-orange-500 text-white font-bold text-xl' },
-                                { l: '1', c: 'bg-[#333] text-white' }, { l: '2', c: 'bg-[#333] text-white' }, { l: '3', c: 'bg-[#333] text-white' }, { l: '+', c: 'bg-orange-500 text-white font-bold text-xl' },
-                                { l: '0', c: 'bg-[#333] text-white col-span-2 rounded-full pl-6 text-left' }, { l: '.', c: 'bg-[#333] text-white' }, { l: '=', c: 'bg-orange-500 text-white font-bold text-xl' }
-                            ].map((btn, i) => (
-                                <button 
-                                    key={i} 
-                                    onClick={() => handleCalcInput(btn.l === 'DEL' ? 'DEL' : btn.l)}
-                                    className={`${btn.c} rounded-full flex items-center justify-center text-xl transition-transform active:scale-95 hover:brightness-110`}
-                                >
-                                    {btn.op ? <span className="material-symbols-outlined !text-[20px]">{btn.op}</span> : btn.l}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* CALENDAR APP */}
-                {state === 'calendar' && (
-                    <div className="w-full h-full flex p-5 gap-6 bg-black/40 backdrop-blur-md relative overflow-hidden">
-                        <BackButton />
-                        
-                        {/* LEFT: GRID CALENDAR */}
-                        <div className="w-1/2 flex flex-col justify-center border-r border-white/10 pr-4 pt-6">
-                            {/* Header: Month Navigation */}
-                            <div className="flex items-center justify-between mb-4 px-1">
-                                <button onClick={() => setDisplayDate(new Date(displayDate.getFullYear(), displayDate.getMonth() - 1, 1))} className="p-1 rounded-full hover:bg-white/10 transition-colors">
-                                    <span className="material-symbols-outlined !text-[16px]">chevron_left</span>
-                                </button>
-                                <span className="text-xs font-bold uppercase tracking-widest text-white">
-                                    {monthNames[displayDate.getMonth()]} <span className="opacity-50">{displayDate.getFullYear()}</span>
-                                </span>
-                                <button onClick={() => setDisplayDate(new Date(displayDate.getFullYear(), displayDate.getMonth() + 1, 1))} className="p-1 rounded-full hover:bg-white/10 transition-colors">
-                                    <span className="material-symbols-outlined !text-[16px]">chevron_right</span>
-                                </button>
-                            </div>
-
-                            {/* Days Grid */}
-                            <div className="grid grid-cols-7 gap-1 text-center">
-                                {weekDays.map((d, i) => <div key={i} className="text-[8px] font-bold opacity-30">{d}</div>)}
-                                {Array.from({ length: getDaysInMonth(displayDate).firstDayOfMonth }).map((_, i) => <div key={`empty-${i}`} />)}
-                                {Array.from({ length: getDaysInMonth(displayDate).daysInMonth }).map((_, i) => {
-                                    const day = i + 1;
-                                    const dateStr = getDateKey(new Date(displayDate.getFullYear(), displayDate.getMonth(), day));
-                                    const isSelected = selectedDate.getDate() === day && selectedDate.getMonth() === displayDate.getMonth();
-                                    const isToday = new Date().getDate() === day && new Date().getMonth() === displayDate.getMonth();
-                                    const hasEvent = calendarEvents[dateStr] && calendarEvents[dateStr].length > 0;
-
-                                    return (
-                                        <button 
-                                            key={day} 
-                                            onClick={() => { setSelectedDate(new Date(displayDate.getFullYear(), displayDate.getMonth(), day)); uiSounds.click(); }}
-                                            className={`
-                                                relative w-6 h-6 rounded-md text-[9px] font-bold flex items-center justify-center transition-all
-                                                ${isSelected ? 'bg-blue-600 text-white shadow-lg scale-110' : isToday ? 'bg-white/20 text-white border border-white/20' : 'text-white/60 hover:bg-white/10'}
-                                            `}
-                                        >
-                                            {day}
-                                            {hasEvent && !isSelected && <div className="absolute bottom-0.5 w-1 h-1 rounded-full bg-blue-400"></div>}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* RIGHT: EVENTS LIST & ADD */}
-                        <div className="flex-1 flex flex-col h-full min-w-0 pl-1 pt-2">
-                            <div className="mb-2 flex justify-end">
-                                <span className="text-[10px] font-bold opacity-50 uppercase tracking-widest">
-                                    {selectedDate.getDate()} de {monthNames[selectedDate.getMonth()]}
-                                </span>
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto space-y-2 pr-1 glass-scroll mb-2">
-                                {(!calendarEvents[getDateKey(selectedDate)] || calendarEvents[getDateKey(selectedDate)].length === 0) ? (
-                                    <div className="h-full flex flex-col items-center justify-center opacity-30 gap-1">
-                                        <span className="material-symbols-outlined !text-[20px]">event_note</span>
-                                        <span className="text-[9px]">Sem eventos</span>
-                                    </div>
-                                ) : (
-                                    calendarEvents[getDateKey(selectedDate)].map(event => (
-                                        <div key={event.id} className={`flex items-center gap-2 p-2 rounded-lg transition-all ${event.completed ? 'opacity-40 bg-black/10' : 'bg-white/5 hover:bg-white/10'}`}>
-                                            <button onClick={() => toggleEventComplete(event.id)} className={`w-3.5 h-3.5 rounded border flex items-center justify-center flex-shrink-0 ${event.completed ? 'bg-blue-500 border-blue-500' : 'border-white/30 hover:border-white'}`}>
-                                                {event.completed && <span className="material-symbols-outlined !text-[10px]">check</span>}
-                                            </button>
-                                            <span className={`text-[10px] font-medium truncate flex-1 ${event.completed ? 'line-through' : ''}`}>{event.title}</span>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-
-                            <form onSubmit={handleAddEvent} className="flex gap-2 mt-auto">
-                                <input 
-                                    type="text" 
-                                    placeholder="Novo evento..." 
-                                    value={newEventInput}
-                                    onChange={e => setNewEventInput(e.target.value)}
-                                    className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] outline-none focus:border-blue-500/50 transition-colors"
-                                />
-                                <button type="submit" className="w-7 h-7 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <span className="material-symbols-outlined !text-[14px]">add</span>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                )}
-
-                {/* FOCUS TIMER APP */}
-                {state === 'focus-timer' && (
-                    <div className="w-full h-full flex items-center p-6 gap-8 relative bg-black/40 backdrop-blur-md justify-center">
-                        <BackButton />
-                        
-                        {/* Left: Circular Progress with Gradient */}
-                        <div className="relative w-36 h-36 flex-shrink-0 flex items-center justify-center">
-                            <svg className="w-full h-full -rotate-90" viewBox="0 0 144 144">
-                                <defs>
-                                    <linearGradient id="timer-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stopColor="#3b82f6" />
-                                        <stop offset="100%" stopColor="#06b6d4" />
-                                    </linearGradient>
-                                    <filter id="timer-glow">
-                                        <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
-                                        <feMerge>
-                                            <feMergeNode in="coloredBlur"/>
-                                            <feMergeNode in="SourceGraphic"/>
-                                        </feMerge>
-                                    </filter>
-                                </defs>
-                                {/* Track: Centered at 72,72 */}
-                                <circle cx="72" cy="72" r={timerRadius} stroke="rgba(255,255,255,0.08)" strokeWidth="4" fill="transparent" />
-                                {/* Progress: Centered at 72,72 */}
-                                <circle 
-                                    cx="72" cy="72" r={timerRadius} stroke="url(#timer-gradient)" strokeWidth="4" fill="transparent" 
-                                    strokeDasharray={timerCircumference} 
-                                    strokeDashoffset={timerOffset} 
-                                    strokeLinecap="round" 
-                                    filter="url(#timer-glow)"
-                                    className={`transition-all duration-1000 ease-linear ${focusData.isRunning ? 'opacity-100' : 'opacity-60'}`} 
-                                />
-                            </svg>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                {isEditingTime ? (
-                                    <input 
-                                        type="number"
-                                        autoFocus
-                                        value={inputTime}
-                                        onChange={(e) => setInputTime(e.target.value)}
-                                        onBlur={submitTime}
-                                        onKeyDown={(e) => e.key === 'Enter' && submitTime()}
-                                        className="w-16 bg-transparent text-3xl font-black text-center text-white outline-none border-b border-white/20 pb-1"
-                                        placeholder="mm"
-                                    />
-                                ) : (
-                                    <span 
-                                        onClick={startEditingTime}
-                                        className={`text-3xl font-black tabular-nums tracking-tighter cursor-pointer hover:scale-110 active:scale-95 transition-all ${focusData.isRunning ? 'text-white' : 'text-white/60'}`}
-                                    >
-                                        {formatTime(focusData.timeLeft)}
-                                    </span>
-                                )}
-                                <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-cyan-400 opacity-80 mt-1">
-                                    {focusData.isRunning ? 'Focando' : 'Pausado'}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Right: Controls */}
-                        <div className="flex-1 flex flex-col justify-center gap-4 min-w-[140px]">
-                            <div className="flex items-center justify-center gap-3">
-                                <button onClick={() => adjustTimer(-5)} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center border border-white/5 transition-all active:scale-95 group" title="-5 Minutos">
-                                    <span className="text-[10px] font-bold text-white/50 group-hover:text-white">-5</span>
-                                </button>
-                                <button 
-                                    onClick={toggleTimer} 
-                                    className={`
-                                        w-16 h-16 rounded-full flex items-center justify-center transition-all 
-                                        ${focusData.isRunning 
-                                            ? 'bg-white/5 text-white border border-white/10 hover:bg-white/10' 
-                                            : 'bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-[0_0_25px_-5px_rgba(59,130,246,0.6)] hover:scale-105 active:scale-95'
-                                        }
-                                    `}
-                                >
-                                    <span className="material-symbols-outlined !text-[32px]">{focusData.isRunning ? 'pause' : 'play_arrow'}</span>
-                                </button>
-                                <button onClick={() => adjustTimer(5)} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center border border-white/5 transition-all active:scale-95 group" title="+5 Minutos">
-                                    <span className="text-[10px] font-bold text-white/50 group-hover:text-white">+5</span>
-                                </button>
-                            </div>
-                            
-                            <button 
-                                onClick={resetTimer} 
-                                className="mx-auto px-4 py-1.5 rounded-full text-white/30 hover:text-red-400 text-[9px] uppercase font-bold tracking-[0.2em] transition-all flex items-center gap-1.5 opacity-60 hover:opacity-100"
-                            >
-                                <span className="material-symbols-outlined !text-[12px]">replay</span> Resetar
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* CAMERA PREVIEW APP */}
-                {state === 'camera' && (
-                    <div className="w-full h-full relative bg-black flex flex-col overflow-hidden rounded-[32px]">
-                        <BackButton />
-                        
-                        {cameraError ? (
-                            <div className="w-full h-full flex flex-col items-center justify-center gap-4 p-6 text-center">
-                                <span className="material-symbols-outlined text-red-500 !text-[40px]">videocam_off</span>
-                                <p className="text-sm font-medium text-white/80">{cameraError}</p>
-                            </div>
-                        ) : (
-                            <>
-                                <video 
-                                    ref={videoRef} 
-                                    autoPlay 
-                                    muted 
-                                    playsInline 
-                                    className={`w-full h-full object-cover transform scale-x-[-1] transition-opacity duration-300 ${isVideoOff ? 'opacity-0' : 'opacity-100'}`} 
-                                />
-                                
-                                {isVideoOff && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-[#1a1a1a]">
-                                        <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center">
-                                            <span className="material-symbols-outlined !text-[40px] text-white/20">person</span>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Overlay Gradient */}
-                                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div>
-
-                                {/* Bottom Controls */}
-                                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 z-20">
-                                    <button 
-                                        onClick={toggleMic} 
-                                        className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${isMicMuted ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-white/20 hover:bg-white/30 text-white backdrop-blur-md'}`}
-                                        title={isMicMuted ? "Ligar Microfone" : "Desligar Microfone"}
-                                    >
-                                        <span className="material-symbols-outlined !text-[20px]">{isMicMuted ? 'mic_off' : 'mic'}</span>
-                                    </button>
-
-                                    <button 
-                                        onClick={toggleCam} 
-                                        className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${isVideoOff ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-white/20 hover:bg-white/30 text-white backdrop-blur-md'}`}
-                                        title={isVideoOff ? "Ligar Câmera" : "Desligar Câmera"}
-                                    >
-                                        <span className="material-symbols-outlined !text-[20px]">{isVideoOff ? 'videocam_off' : 'videocam'}</span>
-                                    </button>
-
-                                    <button 
-                                        onClick={togglePiP} 
-                                        className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center transition-all text-white"
-                                        title="Picture-in-Picture"
-                                    >
-                                        <span className="material-symbols-outlined !text-[20px]">picture_in_picture_alt</span>
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                )}
-
-                {/* MUSIC PLAYER */}
-                {state === 'music' && (
-                    <div className="w-full h-full flex items-center p-5 gap-6 bg-black/40 backdrop-blur-md">
-                        <BackButton />
-                        
-                        <div className="relative flex-shrink-0 group/disc ml-8">
-                             <div className={`w-36 h-36 rounded-full border border-white/10 relative z-10 transition-transform duration-[5000ms] ease-linear ${playerState.isPlaying ? 'rotate-infinite' : ''} shadow-[0_10px_30px_rgba(0,0,0,0.5)] bg-[#111]`}>
-                                <img src={currentTrack.cover} className="w-full h-full rounded-full object-cover" alt="Cover" />
-                                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/10 to-transparent pointer-events-none opacity-50" />
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/90 border border-white/10 backdrop-blur-sm flex items-center justify-center">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-[#222]" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 flex flex-col justify-between h-full py-2 pl-2 pr-1">
-                            <div className="flex items-start justify-between w-full">
-                                <div className="flex flex-col gap-0.5 overflow-hidden mr-4">
-                                    <div className="relative overflow-hidden w-full">
-                                        <h3 className={`text-xl font-black tracking-tight whitespace-nowrap`}>{currentTrack.title}</h3>
-                                    </div>
-                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-300" style={{ color: themeColor }}>{currentTrack.artist}</p>
-                                </div>
-                                <button onClick={() => handleStateChange('idle')} className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/20 transition-colors flex-shrink-0" title="Minimizar para Esfera">
-                                    <span className="material-symbols-outlined !text-[16px] opacity-60">expand_more</span>
-                                </button>
-                            </div>
-
-                            <div className="flex flex-col gap-4">
-                                <div className="group/progress w-full flex items-center gap-3">
-                                    <span className="text-[9px] font-mono text-white/30 w-8 text-right">{formatTime(playerState.currentTime)}</span>
-                                    <div className="flex-1 h-1.5 bg-white/10 rounded-full relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 h-full rounded-full transition-all duration-100" style={{ width: `${(playerState.currentTime / (playerState.duration || 1)) * 100}%`, backgroundColor: themeColor }} />
-                                        <input type="range" min="0" max={playerState.duration || 100} value={playerState.currentTime} onChange={(e) => seek(parseFloat(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                                    </div>
-                                    <span className="text-[9px] font-mono text-white/30 w-8">{formatTime(playerState.duration)}</span>
-                                </div>
-
-                                <div className="flex items-center justify-between">
-                                    <button onClick={toggleShuffle} className={`p-2 hover:bg-white/5 rounded-full transition-colors ${playerState.isShuffle ? 'text-blue-400' : 'text-white/30 hover:text-white'}`}><span className="material-symbols-outlined !text-[18px]">shuffle</span></button>
-                                    <div className="flex items-center gap-4">
-                                        <button onClick={prevTrack} className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full transition-all active:scale-95"><span className="material-symbols-outlined !text-[28px]">skip_previous</span></button>
-                                        <button onClick={toggleMusic} className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.2)]"><span className={`material-symbols-outlined !text-[28px] ml-0.5 ${playerState.isPlaying ? '' : 'ml-1'}`}>{playerState.isPlaying ? 'pause' : 'play_arrow'}</span></button>
-                                        <button onClick={nextTrack} className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full transition-all active:scale-95"><span className="material-symbols-outlined !text-[28px]">skip_next</span></button>
-                                    </div>
-                                    <div className="flex items-center gap-2 group/vol-container">
-                                        <button className="text-white/30 hover:text-white transition-colors"><span className="material-symbols-outlined !text-[18px]">volume_up</span></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* TRANSLATOR TOOL */}
-                {state === 'translate' && (
-                    <div className="w-full h-full p-0 flex flex-col relative bg-black/20">
-                        {/* LIQUID GRADIENT BACKGROUND */}
-                        <div className="absolute inset-0 z-0 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.4),transparent_70%)] animate-[pulse_4s_infinite]"></div>
-                        
-                        <BackButton />
-
-                        {/* INPUT AREA (TOP) */}
-                        <div className="flex-1 bg-gradient-to-b from-white/10 to-transparent p-6 flex flex-col justify-center relative border-b border-white/10 backdrop-blur-sm z-10">
-                            <div className="absolute top-4 left-14 flex gap-2">
-                                <div className="relative">
-                                    <select 
-                                        value={translateData.sourceLang} 
-                                        onChange={(e) => setLanguage('source', e.target.value)}
-                                        className="appearance-none bg-black/30 border border-white/10 text-white text-[10px] uppercase font-bold rounded-full pl-3 pr-6 py-1 outline-none cursor-pointer hover:bg-black/50 transition-colors"
-                                    >
-                                        {LANGUAGES.map(l => <option key={l.code} value={l.code} className="bg-black text-white">{l.label}</option>)}
-                                    </select>
-                                    <span className="material-symbols-outlined absolute right-1 top-1/2 -translate-y-1/2 !text-[12px] pointer-events-none text-white/50">expand_more</span>
-                                </div>
-                            </div>
-                            
-                            <textarea 
-                                ref={textAreaRef}
-                                value={translateData.input} 
-                                onChange={e => setTranslateData(d => ({ ...d, input: e.target.value }))}
-                                placeholder={translateData.isListening ? "Ouvindo..." : "Digite ou cole o texto..."}
-                                className="w-full bg-transparent outline-none text-2xl font-light text-white resize-none placeholder-white/30 text-center animate-[fadeIn_0.3s]"
-                                rows={2}
-                            />
-                            
-                            {translateData.isListening && (
-                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-                                    <Waveform isActive={true} color="#60a5fa" />
-                                </div>
-                            )}
-
-                            {/* TEXT ACTIONS (Paste / Translate) */}
-                            <div className="absolute bottom-4 right-4 flex gap-2 z-20">
-                                {!translateData.input && (
-                                    <button 
-                                        onClick={handleClipboardPaste} 
-                                        className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all flex items-center justify-center backdrop-blur-md border border-white/5"
-                                        title="Colar e Traduzir"
-                                    >
-                                        <span className="material-symbols-outlined !text-[18px]">content_paste</span>
-                                    </button>
-                                )}
-                                
-                                {translateData.input && !translateData.isListening && (
-                                    <>
-                                        <button 
-                                            onClick={clearTranslation} 
-                                            className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all"
-                                            title="Limpar"
-                                        >
-                                            <span className="material-symbols-outlined !text-[18px]">backspace</span>
-                                        </button>
-                                        <button 
-                                            onClick={handleManualTranslate} 
-                                            className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-[10px] uppercase tracking-wider transition-all flex items-center gap-1 shadow-lg border border-blue-400/30"
-                                        >
-                                            <span>Traduzir</span>
-                                            <span className="material-symbols-outlined !text-[14px]">arrow_forward</span>
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* CONTROLS (CENTER OVERLAP) */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex gap-4 items-center">
-                            <button 
-                                onClick={toggleListening} 
-                                className={`
-                                    w-16 h-16 rounded-full flex items-center justify-center 
-                                    shadow-[0_0_30px_rgba(0,0,0,0.5)] transition-all duration-300
-                                    hover:scale-110 active:scale-95 border-2
-                                    ${translateData.isListening 
-                                        ? 'bg-red-500 border-red-400 text-white animate-pulse shadow-[0_0_40px_rgba(239,68,68,0.6)]' 
-                                        : 'bg-blue-600 border-blue-400 text-white hover:bg-blue-500'
-                                    }
-                                `}
-                            >
-                                <span className="material-symbols-outlined !text-[32px]">{translateData.isListening ? 'mic_off' : 'mic'}</span>
-                            </button>
-                            
-                            <button 
-                                onClick={swapLanguages} 
-                                className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center border border-white/20 hover:bg-white/20 transition-all text-white absolute -right-16 shadow-lg"
-                                title="Inverter Idiomas"
-                            >
-                                <span className="material-symbols-outlined !text-[20px]">swap_vert</span>
-                            </button>
-                        </div>
-
-                        {/* OUTPUT AREA (BOTTOM) */}
-                        <div className="flex-1 bg-black/60 p-6 flex flex-col justify-center relative z-10 backdrop-blur-md">
-                            <div className="absolute bottom-4 left-4 flex gap-2">
-                                <div className="relative">
-                                    <select 
-                                        value={translateData.targetLang} 
-                                        onChange={(e) => setLanguage('target', e.target.value)}
-                                        className="appearance-none bg-white/10 border border-white/10 text-blue-400 text-[10px] uppercase font-bold rounded-full pl-3 pr-6 py-1 outline-none cursor-pointer hover:bg-white/20 transition-colors"
-                                    >
-                                        {LANGUAGES.map(l => <option key={l.code} value={l.code} className="bg-black text-white">{l.label}</option>)}
-                                    </select>
-                                    <span className="material-symbols-outlined absolute right-1 top-1/2 -translate-y-1/2 !text-[12px] pointer-events-none text-white/50">expand_more</span>
-                                </div>
-                            </div>
-
-                            <div className="text-center relative">
-                                {translateData.loading ? (
-                                    <div className="flex justify-center"><div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce mx-1"></div><div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce mx-1 delay-75"></div><div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce mx-1 delay-150"></div></div>
-                                ) : (
-                                    <p className={`text-xl font-medium text-blue-300 transition-all ${translateData.isSpeaking ? 'scale-105 brightness-125' : 'scale-100'}`}>
-                                        {translateData.output || "Tradução..."}
-                                    </p>
-                                )}
-                            </div>
-
-                            {translateData.output && (
-                                <div className="absolute bottom-4 right-4 flex gap-2">
-                                    <button 
-                                        onClick={handleCopyOutput}
-                                        className="p-3 rounded-full transition-all text-white/50 hover:text-white hover:bg-white/10"
-                                        title="Copiar Tradução"
-                                    >
-                                        <span className={`material-symbols-outlined !text-[20px] transition-transform ${outputCopied ? 'scale-110 text-green-400' : ''}`}>
-                                            {outputCopied ? 'check' : 'content_copy'}
-                                        </span>
-                                    </button>
-                                    <button 
-                                        onClick={() => speakText(translateData.output, translateData.targetLang)}
-                                        className={`p-3 rounded-full transition-all ${translateData.isSpeaking ? 'bg-blue-500 text-white animate-pulse' : 'text-white/50 hover:text-white hover:bg-white/10'}`}
-                                        title="Ouvir"
-                                    >
-                                        <span className="material-symbols-outlined !text-[20px]">volume_up</span>
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
                 {/* ASK AI - FUNCTIONAL CHAT */}
                 {state === 'ask-ai' && (
                   <div className="w-full h-full p-0 flex relative bg-black/40 backdrop-blur-md">
@@ -1130,25 +678,56 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
                       {/* Chat Area */}
                       <div className="flex-1 flex flex-col min-w-0">
                           {/* Messages */}
-                          <div className="flex-1 overflow-y-auto p-4 space-y-3 glass-scroll">
+                          <div className="flex-1 overflow-y-auto p-4 space-y-3 glass-scroll relative">
                               {chatMessages.length === 0 && (
                                   <div className="h-full flex items-center justify-center opacity-30 text-center text-xs">
                                       <p>Pergunte qualquer coisa à IA.<br/>Respostas rápidas e concisas.</p>
                                   </div>
                               )}
+                              
+                              {/* MODE TOGGLE IN HEADER AREA */}
+                              <div className="absolute top-2 right-4 z-20">
+                                  <button 
+                                     onClick={() => { uiSounds.click(); setIsThinkingMode(!isThinkingMode); }}
+                                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all shadow-lg backdrop-blur-md ${isThinkingMode ? 'bg-purple-600 border-purple-400 text-white' : 'bg-white/10 border-white/20 text-white/70 hover:bg-white/20'}`}
+                                     title={isThinkingMode ? "Modo Pensamento Ativo" : "Ativar Modo Pensamento"}
+                                  >
+                                     <span className="material-symbols-outlined !text-[12px]">{isThinkingMode ? 'psychology' : 'search'}</span>
+                                     <span className="text-[9px] font-bold uppercase tracking-wider">{isThinkingMode ? 'Pensando' : 'Pesquisa'}</span>
+                                  </button>
+                              </div>
+
                               {chatMessages.map(msg => (
-                                  <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-[fadeIn_0.2s]`}>
+                                  <div key={msg.id} className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'} animate-[fadeIn_0.2s]`}>
                                       <div className={`max-w-[85%] p-2.5 rounded-2xl text-xs leading-relaxed ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white/10 text-white rounded-bl-none'}`}>
                                           {msg.text}
                                       </div>
+                                      {/* Source Chips */}
+                                      {msg.sources && msg.sources.length > 0 && (
+                                          <div className="flex flex-wrap gap-1.5 max-w-[85%] mt-1">
+                                              {msg.sources.map((src, idx) => (
+                                                  <a 
+                                                    key={idx} 
+                                                    href={src.uri} 
+                                                    target="_blank" 
+                                                    rel="noreferrer" 
+                                                    className="flex items-center gap-1 bg-white/5 hover:bg-white/10 border border-white/10 px-2 py-1 rounded-full text-[9px] text-white/70 hover:text-blue-300 transition-colors"
+                                                  >
+                                                      <span className="material-symbols-outlined !text-[10px]">public</span>
+                                                      <span className="truncate max-w-[120px]">{src.title}</span>
+                                                  </a>
+                                              ))}
+                                          </div>
+                                      )}
                                   </div>
                               ))}
                               {isChatLoading && (
                                   <div className="flex justify-start animate-pulse">
-                                      <div className="bg-white/5 p-2 rounded-xl flex gap-1">
+                                      <div className="bg-white/5 p-2 rounded-xl flex gap-1 items-center">
                                           <div className="w-1.5 h-1.5 bg-white/50 rounded-full animate-bounce"></div>
                                           <div className="w-1.5 h-1.5 bg-white/50 rounded-full animate-bounce delay-75"></div>
                                           <div className="w-1.5 h-1.5 bg-white/50 rounded-full animate-bounce delay-150"></div>
+                                          {isThinkingMode && <span className="ml-2 text-[9px] uppercase font-bold opacity-50 tracking-wider">Raciocinando...</span>}
                                       </div>
                                   </div>
                               )}
@@ -1157,12 +736,12 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
 
                           {/* Input */}
                           <div className="p-3 border-t border-white/5 bg-black/20">
-                              <form onSubmit={handleChatSend} className="relative flex items-center gap-2">
+                              <form onSubmit={(e) => handleChatSend(e)} className="relative flex items-center gap-2">
                                   <input 
                                       type="text" 
                                       value={chatInput}
                                       onChange={(e) => setChatInput(e.target.value)}
-                                      placeholder="Mensagem..."
+                                      placeholder={isThinkingMode ? "Pergunta complexa..." : "Pesquisar ou perguntar..."}
                                       className="w-full bg-white/5 rounded-full pl-4 pr-10 py-2 text-xs outline-none text-white placeholder-white/30 focus:bg-white/10 transition-colors"
                                       autoFocus
                                   />
@@ -1181,6 +760,7 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
             </div>
         </div>
 
+        {/* ... SATELLITES (Focus/Music) kept unchanged ... */}
         {/* --- FOCUS TIMER SPHERE (LEFT SATELLITE) --- */}
         <div 
             className={`
@@ -1192,7 +772,7 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
                 hover:scale-110
             `}
             style={{
-                marginLeft: `${sphereMarginLeft}px`, // Pushed to the LEFT of center
+                marginLeft: `${sphereMarginLeft}px`, 
                 transform: showFocusSphere ? 'translate(0, 0)' : 'translate(40px, 0)'
             }}
         >
@@ -1237,7 +817,7 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
                 hover:scale-110
             `}
             style={{
-                marginLeft: `${sphereMarginRight}px`, // Pushed to the RIGHT of center
+                marginLeft: `${sphereMarginRight}px`, 
                 transform: showSphere ? 'translate(0, 0)' : 'translate(-40px, 0)'
             }}
         >

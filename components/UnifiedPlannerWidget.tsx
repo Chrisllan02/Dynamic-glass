@@ -241,6 +241,7 @@ export const UnifiedPlannerWidget: React.FC<UnifiedPlannerWidgetProps> = ({ isDa
   if (isMini) {
       return (
           <button 
+            onMouseEnter={() => setExpanded(true)}
             onClick={() => setExpanded(true)}
             className="flex flex-col items-center justify-center h-full w-full gap-1 px-4 group hover:scale-105 transition-transform"
           >
@@ -261,7 +262,11 @@ export const UnifiedPlannerWidget: React.FC<UnifiedPlannerWidgetProps> = ({ isDa
   }
 
   return (
-    <div className="flex flex-col items-start gap-2 animate-[fadeIn_1s_ease-out] pointer-events-auto">
+    <div 
+        className="flex flex-col items-start gap-2 animate-[fadeIn_1s_ease-out] pointer-events-auto"
+        onMouseEnter={() => setExpanded(true)}
+        onMouseLeave={() => setExpanded(false)}
+    >
         <GlassCard 
             isDarkMode={isDarkMode}
             interactive={!expanded}

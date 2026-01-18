@@ -163,7 +163,11 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ isDarkMode, focusM
   }
 
   return (
-    <div className="flex flex-col items-start gap-2 animate-[fadeIn_1s_ease-out] pointer-events-auto relative">
+    <div 
+        className="flex flex-col items-start gap-2 animate-[fadeIn_1s_ease-out] pointer-events-auto relative"
+        onMouseEnter={() => setExpanded(true)}
+        onMouseLeave={() => setExpanded(false)}
+    >
         <style>{`
             @keyframes rain { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(10px); opacity: 0; } }
             @keyframes snow { 0% { transform: translateY(0) translateX(0); opacity: 1; } 50% { transform: translateY(5px) translateX(2px); } 100% { transform: translateY(10px) translateX(0); opacity: 0; } }
@@ -191,29 +195,22 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ isDarkMode, focusM
                         {weather && <RealisticIcon code={weather.currentCode} />}
                     </div>
                     
-                    {/* Current Stats */}
-                    <div className="flex-1 flex justify-between items-center">
+                    {/* Current Stats & Info */}
+                    <div className="flex-1 flex items-center gap-4">
                         <span className={`text-2xl font-light tracking-tight leading-none ${tempClass}`}>
                             {weather?.currentTemp}°
                         </span>
                         
-                        {/* Right Side Header Info (Expanded Only) */}
+                        {/* Region & Desc - Left Aligned for Visibility */}
                         {expanded && (
-                            <div className="flex flex-col items-end animate-[fadeIn_0.4s_ease-out]">
-                                <span className={`text-[9px] font-bold uppercase tracking-widest ${textPrimary} text-right truncate max-w-[120px]`}>
+                            <div className="flex flex-col items-start animate-[fadeIn_0.4s_ease-out] flex-1 min-w-0">
+                                <span className={`text-[9px] font-bold uppercase tracking-widest ${textPrimary} truncate w-full`}>
                                     {weather?.city}
                                 </span>
-                                <span className={`text-[8px] font-medium opacity-60 ${textPrimary} text-right mt-0.5`}>
+                                <span className={`text-[8px] font-medium opacity-60 ${textPrimary} truncate w-full mt-0.5`}>
                                     {getWeatherDescription(weather?.currentCode || 0)}
                                 </span>
                             </div>
-                        )}
-                        
-                        {/* Compact Info (Collapsed Only) */}
-                        {!expanded && (
-                             <span className={`ml-auto text-[9px] font-bold uppercase tracking-widest ${textSecondary} text-right truncate max-w-[90px]`}>
-                                {weather?.city}
-                             </span>
                         )}
                     </div>
                 </div>

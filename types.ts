@@ -57,6 +57,7 @@ export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
   timestamp: number;
+  sources?: { title: string; uri: string }[];
 }
 
 export type ThemeId = 'default' | 'retro' | 'fresh' | 'chroma' | 'minimal' | 'nordic' | 'holo' | 'weather' | 'mix' | 'waves' | 'book' | 'liquid';
