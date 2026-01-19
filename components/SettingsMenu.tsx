@@ -7,23 +7,10 @@ import { uiSounds, refreshSoundSettings } from '../services/soundService';
 
 declare var chrome: any;
 
-// Define AIStudio interface globally to match environment injections and fix modifier/type conflicts
-declare global {
-  interface AIStudio {
-    hasSelectedApiKey: () => Promise<boolean>;
-    openSelectKey: () => Promise<void>;
-  }
-  interface Window {
-    // aistudio is often injected and should be optional to avoid modifier mismatch with other declarations
-    aistudio?: AIStudio;
-  }
-}
-
 interface SettingsMenuProps {
   currentTheme: ThemeId;
   setTheme: (theme: ThemeId) => void;
   isDarkMode: boolean;
-  // Removed setIsDarkMode
   quickLinks: QuickLink[];
   showQuickLinks: boolean;
   setShowQuickLinks: (show: boolean) => void;
@@ -50,7 +37,7 @@ interface SettingsMenuProps {
   setBlurStrength?: (val: number) => void;
 }
 
-const APP_VERSION = "3.8.0";
+const APP_VERSION = "3.9.0";
 
 type TabOption = 'general' | 'visual' | 'widgets' | 'island' | 'ia';
 
@@ -71,40 +58,17 @@ const THEME_LABELS: Record<ThemeId, string> = {
 
 // CSS Patterns that mimic the 3D/Canvas scenes accurately
 const THEME_PREVIEWS: Record<ThemeId, string> = {
-  // Floating Lines (Dark background, Purple/Blue/Pink lines)
   liquid: 'linear-gradient(135deg, #000 0%, #1e1b4b 40%, #4338ca 70%, #ec4899 100%)',
-  
-  // Unicorn Studio (Orange/Black Fluid)
   default: 'radial-gradient(circle at 50% 120%, #f55702 0%, #7c2d12 40%, #000 80%)',
-  
-  // Arctic (Blue/Green/White)
   nordic: 'linear-gradient(to top, #1e90ff 0%, #39d24a 100%)',
-  
-  // Spline 3D Gradient (Pastel Pink/Purple)
   fresh: 'linear-gradient(135deg, #d8b4fe 0%, #f0abfc 50%, #86efac 100%)', 
-  
-  // Grid Scan (Purple/Dark)
   chroma: 'linear-gradient(135deg, #2e1065 0%, #000000 50%, #c026d3 100%)',
-  
-  // Ocean Spline (Cyan/Blue Water)
   waves: 'linear-gradient(180deg, #22d3ee 0%, #0ea5e9 50%, #1e3a8a 100%)',
-  
-  // Glass Wave (Silver/White)
   minimal: 'linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%)',
-  
-  // Aurora (Green/Pink/Blue)
   holo: 'linear-gradient(90deg, #3A29FF, #FF94B4, #22c55e)',
-  
-  // Ballpit (Polka dots on Black)
   retro: 'radial-gradient(circle at 30% 30%, #ef4444 0%, #ef4444 20%, transparent 21%), radial-gradient(circle at 70% 60%, #3b82f6 0%, #3b82f6 20%, transparent 21%), radial-gradient(circle at 40% 80%, #eab308 0%, #eab308 20%, transparent 21%), #111',
-  
-  // Universe (Stars)
   book: 'radial-gradient(circle, #fff 0.5px, transparent 0.5px) 0 0 / 8px 8px, #000',
-  
-  // Mix
   mix: 'conic-gradient(from 0deg, #ef4444, #eab308, #22c55e, #3b82f6, #a855f7, #ef4444)',
-  
-  // Weather
   weather: 'linear-gradient(to bottom, #60a5fa 0%, #bfdbfe 50%, #eff6ff 100%)',
 };
 
@@ -118,25 +82,45 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<TabOption>('general');
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [hasApiKey, setHasApiKey] = useState(false);
   
+  // API Key State
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [savedKeyMasked, setSavedKeyMasked] = useState('');
+  const [showKeyInput, setShowKeyInput] = useState(false);
+
   useEffect(() => {
       storage.get<boolean>(STORAGE_KEYS.UI_SOUNDS).then(enabled => setSoundEnabled(enabled !== false));
       
-      // Check for API Key selection
-      if (window.aistudio) {
-          window.aistudio.hasSelectedApiKey().then(setHasApiKey);
-      }
+      // Load stored API key
+      storage.get<string>(STORAGE_KEYS.USER_API_KEY).then(key => {
+          if (key) {
+              setSavedKeyMasked(key.slice(0, 4) + '...' + key.slice(-4));
+              setShowKeyInput(false);
+          } else {
+              setShowKeyInput(true);
+          }
+      });
   }, []);
 
-  const handleApiKeySelection = async () => {
-    uiSounds.click();
-    if (window.aistudio) {
-        await window.aistudio.openSelectKey();
-        setHasApiKey(true); // Assuming success as per mitigation guidelines
-        window.dispatchEvent(new Event('lumina-apikey-changed')); // Notify Island
-        uiSounds.success();
-    }
+  const handleSaveApiKey = async () => {
+      uiSounds.click();
+      if (!apiKeyInput.trim()) return;
+      
+      await storage.set(STORAGE_KEYS.USER_API_KEY, apiKeyInput.trim());
+      setSavedKeyMasked(apiKeyInput.slice(0, 4) + '...' + apiKeyInput.slice(-4));
+      setApiKeyInput('');
+      setShowKeyInput(false);
+      
+      window.dispatchEvent(new Event('lumina-apikey-changed')); // Notify components
+      uiSounds.success();
+  };
+
+  const handleClearApiKey = async () => {
+      uiSounds.click();
+      await storage.remove(STORAGE_KEYS.USER_API_KEY);
+      setSavedKeyMasked('');
+      setShowKeyInput(true);
+      window.dispatchEvent(new Event('lumina-apikey-changed'));
   };
 
   const handleSoundToggle = () => { 
@@ -151,7 +135,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   const styles = {
     text: isDarkMode ? 'text-white' : 'text-slate-900',
     textDim: isDarkMode ? 'text-white/60' : 'text-slate-500',
-    input: isDarkMode ? 'bg-black/40 border-white/20' : 'bg-white border-black/10',
+    input: isDarkMode ? 'bg-black/40 border-white/20 text-white focus:border-blue-500/50' : 'bg-white border-black/10 text-slate-900 focus:border-blue-500/50',
     divider: isDarkMode ? 'border-white/10' : 'border-black/5',
     tabActive: isDarkMode ? 'bg-white/20 text-white border-white/30' : 'bg-white text-blue-600 shadow-sm border-black/5',
   };
@@ -315,42 +299,63 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                  <div className="space-y-2">
                     <h3 className={`text-sm font-bold ${styles.text}`}>Chave de API do Gemini</h3>
                     <p className={`text-[11px] ${styles.textDim} leading-relaxed`}>
-                        Por segurança, não colamos chaves aqui. Clique no botão abaixo para abrir o <strong>Google AI Studio</strong> e selecionar sua chave protegida.
+                        Para usar os recursos de Inteligência Artificial, insira sua chave gratuita ou paga do Google AI Studio.
                     </p>
                  </div>
 
-                 <div className="flex flex-col gap-3">
-                    <button 
-                        onClick={handleApiKeySelection}
-                        className={`w-full py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.1em] transition-all ${hasApiKey ? 'bg-green-500 text-white shadow-lg shadow-green-500/20' : 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500'}`}
-                    >
-                        {hasApiKey ? 'API Vinculada ✓' : 'Vincular Chave API'}
-                    </button>
-                    
-                    {!hasApiKey && (
+                 {!showKeyInput ? (
+                     <div className="flex items-center justify-between p-3 bg-black/20 rounded-xl border border-white/10">
+                         <div className="flex flex-col items-start">
+                             <span className="text-[9px] uppercase font-bold text-green-400 tracking-widest">Chave Ativa</span>
+                             <span className="text-[10px] font-mono text-white/50">{savedKeyMasked}</span>
+                         </div>
+                         <button onClick={handleClearApiKey} className="p-2 text-white/30 hover:text-red-400 transition-colors">
+                             <span className="material-symbols-outlined !text-[16px]">delete</span>
+                         </button>
+                     </div>
+                 ) : (
+                     <div className="flex flex-col gap-3">
+                        <div className="relative">
+                            <input 
+                                type="password" 
+                                value={apiKeyInput}
+                                onChange={(e) => setApiKeyInput(e.target.value)}
+                                placeholder="Cole sua chave aqui..."
+                                className={`w-full pl-4 pr-10 py-3 rounded-xl outline-none text-xs font-mono transition-all ${styles.input}`}
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-white/20 !text-[16px]">vpn_key</span>
+                        </div>
+                        <button 
+                            onClick={handleSaveApiKey}
+                            disabled={!apiKeyInput.trim()}
+                            className={`w-full py-3 rounded-xl font-bold text-[10px] uppercase tracking-[0.1em] transition-all ${apiKeyInput.trim() ? 'bg-blue-600 text-white shadow-lg hover:bg-blue-500' : 'bg-white/5 text-white/20 cursor-not-allowed'}`}
+                        >
+                            Salvar Chave
+                        </button>
+                        
                         <a 
                             href="https://aistudio.google.com/app/apikey" 
                             target="_blank" 
                             rel="noreferrer"
-                            className="text-[10px] font-bold text-blue-400 hover:underline flex items-center justify-center gap-1"
+                            className="text-[10px] font-bold text-blue-400 hover:underline flex items-center justify-center gap-1 mt-1"
                         >
-                            Criar chave no Google AI Studio <span className="material-symbols-outlined !text-[12px]">open_in_new</span>
+                            Obter chave no Google AI Studio <span className="material-symbols-outlined !text-[12px]">open_in_new</span>
                         </a>
-                    )}
-                 </div>
+                     </div>
+                 )}
               </div>
 
               <div className="p-4 rounded-2xl bg-black/10 border border-white/5 space-y-3">
-                  <h4 className={`text-[10px] font-bold uppercase tracking-widest ${styles.textDim}`}>Importante</h4>
+                  <h4 className={`text-[10px] font-bold uppercase tracking-widest ${styles.textDim}`}>Privacidade</h4>
                   <ul className="space-y-2">
                       <li className="flex gap-2 text-[10px] leading-relaxed opacity-60">
                         <span className="text-blue-400">•</span>
-                        <span>A chave é armazenada de forma segura localmente no seu navegador.</span>
+                        <span>Sua chave é armazenada apenas no seu navegador localmente.</span>
                       </li>
                       <li className="flex gap-2 text-[10px] leading-relaxed opacity-60">
                         <span className="text-blue-400">•</span>
                         <span>
-                            Consulte os <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">detalhes de faturamento</a> para evitar interrupções.
+                            A chave é enviada diretamente aos servidores do Google (Google GenAI API) sem intermediários.
                         </span>
                       </li>
                   </ul>

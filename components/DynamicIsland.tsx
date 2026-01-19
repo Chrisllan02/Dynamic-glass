@@ -132,10 +132,9 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
   // Listen for API Key updates
   useEffect(() => {
       const checkApiKey = async () => {
-          if (window.aistudio) {
-              const hasKey = await window.aistudio.hasSelectedApiKey();
-              setHasApiKey(hasKey);
-          }
+          // Check storage for user key, fallback to env (dev mode)
+          const storedKey = await storage.get<string>(STORAGE_KEYS.USER_API_KEY);
+          setHasApiKey(!!storedKey || !!process.env.API_KEY);
       };
       checkApiKey();
       

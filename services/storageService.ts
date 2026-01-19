@@ -11,7 +11,7 @@ export const STORAGE_KEYS = {
   ANIMATION: 'lumina_anim_override',
   BACKGROUND_IMAGE: 'lumina_background_image', // Heavy -> Local
   USER_NAME: 'lumina_user_name', 
-  // FIX: Removed USER_API_KEY as per guidelines (use process.env.API_KEY exclusively)
+  USER_API_KEY: 'lumina_user_api_key_v1', // Nova chave para persistência local da API
   UI_SOUNDS: 'lumina_ui_sounds_enabled',
   LINKS: 'lumina_links',
   SHOW_LINKS: 'lumina_show_links',
@@ -69,7 +69,8 @@ const LOCAL_ONLY_KEYS = [
     STORAGE_KEYS.HOROSCOPE_CACHE,
     STORAGE_KEYS.TECH_FACT_CACHE,
     STORAGE_KEYS.TIMER_STATE,
-    STORAGE_KEYS.LAST_ISLAND_APP 
+    STORAGE_KEYS.LAST_ISLAND_APP,
+    STORAGE_KEYS.USER_API_KEY // Security: Keep local, do not sync across devices automatically
 ];
 
 export const storage = {

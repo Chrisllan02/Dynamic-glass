@@ -3,6 +3,12 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { QuoteData, HoroscopeData, TechFactData, TodoTask, CalendarEvent } from "../types";
 import { storage, STORAGE_KEYS } from "./storageService";
 
+// Helper to retrieve API key securely from storage or fallback to env (dev mode)
+const getApiKey = async (): Promise<string | undefined> => {
+    const storedKey = await storage.get<string>(STORAGE_KEYS.USER_API_KEY);
+    return storedKey || process.env.API_KEY;
+};
+
 // Helper to get a default quote if API fails
 const getDefaultQuote = (): QuoteData => ({
   text: "A simplicidade é o último grau de sofisticação.",
@@ -10,7 +16,10 @@ const getDefaultQuote = (): QuoteData => ({
 });
 
 export const getDailyInspiration = async (): Promise<QuoteData> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = await getApiKey();
+  if (!apiKey) return getDefaultQuote();
+
+  const ai = new GoogleGenAI({ apiKey });
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -36,7 +45,10 @@ export const getDailyInspiration = async (): Promise<QuoteData> => {
 };
 
 export const getHoroscope = async (sign: string): Promise<HoroscopeData> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = await getApiKey();
+  if (!apiKey) return { sign, text: "Configure sua chave de API para ver o horóscopo.", mood: "Offline" };
+
+  const ai = new GoogleGenAI({ apiKey });
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -62,7 +74,10 @@ export const getHoroscope = async (sign: string): Promise<HoroscopeData> => {
 };
 
 export const getTechFact = async (): Promise<TechFactData> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = await getApiKey();
+  if (!apiKey) return { fact: "Adicione sua API Key nas configurações para ver curiosidades.", category: "Setup" };
+
+  const ai = new GoogleGenAI({ apiKey });
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -91,7 +106,10 @@ export const getChatResponse = async (
   systemContext?: string,
   mode: 'search' | 'think' = 'search'
 ): Promise<{ text: string, sources?: { title: string, uri: string }[] }> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = await getApiKey();
+  if (!apiKey) return { text: "Por favor, configure sua chave de API nas configurações para usar o chat." };
+
+  const ai = new GoogleGenAI({ apiKey });
   try {
     const formattedHistory = history.map(msg => ({ role: msg.role === 'user' ? 'user' : 'model', parts: [{ text: msg.text }] }));
     
@@ -130,12 +148,15 @@ export const getChatResponse = async (
     return { text: result.text || "", sources: sources.length > 0 ? sources : undefined };
   } catch (error) {
     console.error(error);
-    return { text: "Desculpe, não consegui processar agora." };
+    return { text: "Desculpe, não consegui processar agora. Verifique sua chave API." };
   }
 };
 
 export const translateText = async (text: string, targetLang: string = "Português"): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = await getApiKey();
+  if (!apiKey) return "API Key ausente.";
+
+  const ai = new GoogleGenAI({ apiKey });
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -148,7 +169,10 @@ export const translateText = async (text: string, targetLang: string = "Portugu�
 };
 
 export const organizeMindDump = async (dump: string): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = await getApiKey();
+  if (!apiKey) return "Configure sua API Key.";
+
+  const ai = new GoogleGenAI({ apiKey });
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -161,7 +185,10 @@ export const organizeMindDump = async (dump: string): Promise<string> => {
 };
 
 export const analyzePlannerData = async (tasks: {text: string, priority: string}[], events: string[]): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = await getApiKey();
+    if (!apiKey) return "Adicione sua API Key para insights.";
+
+    const ai = new GoogleGenAI({ apiKey });
     const tasksString = tasks.map(t => `${t.text} (Prioridade: ${t.priority})`).join(', ');
     try {
         const response = await ai.models.generateContent({
@@ -176,7 +203,10 @@ export const analyzePlannerData = async (tasks: {text: string, priority: string}
 };
 
 export const analyzePerformanceHistory = async (historyData: { day: string, count: number }[]): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = await getApiKey();
+    if (!apiKey) return "API Key necessária.";
+
+    const ai = new GoogleGenAI({ apiKey });
     const stats = historyData.map(h => `${h.day}: ${h.count} tarefas`).join(', ');
     try {
         const response = await ai.models.generateContent({
@@ -190,7 +220,10 @@ export const analyzePerformanceHistory = async (historyData: { day: string, coun
 };
 
 export const analyzeImage = async (base64Data: string, mimeType: string): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = await getApiKey();
+    if (!apiKey) return "Configure a API Key.";
+
+    const ai = new GoogleGenAI({ apiKey });
     try {
         const response = await ai.models.generateContent({
             model: "gemini-3-flash-preview",
@@ -206,7 +239,10 @@ export const analyzeImage = async (base64Data: string, mimeType: string): Promis
 };
 
 export const summarizeText = async (text: string): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = await getApiKey();
+    if (!apiKey) return "Sem API Key.";
+
+    const ai = new GoogleGenAI({ apiKey });
     try {
         const response = await ai.models.generateContent({
             model: "gemini-3-flash-preview",
