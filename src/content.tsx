@@ -25,16 +25,11 @@ const mountOverlay = () => {
   styleTag.textContent = css;
   shadow.appendChild(styleTag);
 
-  if (!document.querySelector('link[href*="Material+Symbols+Outlined"]')) {
+  // Fontes empacotadas na extensão (web_accessible_resources), nada remoto
+  const fontsCssUrl = chrome.runtime.getURL('fonts/fonts.css');
+  if (!document.querySelector(`link[href="${fontsCssUrl}"]`)) {
     const fontLink = document.createElement('link');
-    fontLink.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200';
-    fontLink.rel = 'stylesheet';
-    document.head.appendChild(fontLink);
-  }
-
-  if (!document.querySelector('link[href*="Inter"]')) {
-    const fontLink = document.createElement('link');
-    fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap';
+    fontLink.href = fontsCssUrl;
     fontLink.rel = 'stylesheet';
     document.head.appendChild(fontLink);
   }

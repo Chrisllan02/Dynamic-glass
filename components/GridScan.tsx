@@ -665,6 +665,8 @@ export const GridScan = ({
   }, [enableGyro, uiFaceActive]);
 
   useEffect(() => {
+    // Modelos só são baixados se a webcam estiver habilitada (hoje sempre desativada nos temas)
+    if (!enableWebcam) return;
     let canceled = false;
     const load = async () => {
       try {
@@ -681,7 +683,7 @@ export const GridScan = ({
     return () => {
       canceled = true;
     };
-  }, [modelsPath]);
+  }, [modelsPath, enableWebcam]);
 
   useEffect(() => {
     let stop = false;
