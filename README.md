@@ -1,20 +1,62 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# < Chris /> — Liquid Glass Extension
 
-# Run and deploy your AI Studio app
+Uma extensão de **Nova Guia** para o Chrome (Manifest V3) com efeitos de vidro líquido (glassmorphism), fundos animados em WebGL, Ilha Dinâmica com controle de mídia, e integração com o Gemini para produtividade.
 
-This contains everything you need to run your app locally.
+## Por que este formato?
 
-View your app in AI Studio: https://ai.studio/apps/drive/1m_R2vAHx2_4NUYWQhhfC7QNnzDp55ktn
+O Manifest V3 do Chrome **proíbe carregar código remoto** (scripts de CDN, import maps apontando para esm.sh, etc.). Por isso, todo o código e recursos são empacotados localmente no build:
 
-## Run Locally
+- React, Three.js, OGL, postprocessing e o SDK do Gemini são bundlados pelo Vite.
+- Tailwind CSS é compilado no build (PostCSS), não mais via `cdn.tailwindcss.com`.
+- Fontes (Inter, Nunito, Outfit, Poppins, Material Symbols) são servidas de `public/fonts/`.
+- O runtime do UnicornStudio (temas de fundo) está em `public/vendor/`.
 
-**Prerequisites:**  Node.js
+## Build
 
+**Pré-requisitos:** Node.js 18+
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```bash
+npm install
+npm run build
+```
+
+O resultado fica em `dist/` — esse diretório é a extensão completa.
+
+## Instalar no Chrome (modo desenvolvedor)
+
+1. Abra `chrome://extensions`.
+2. Ative o **Modo do desenvolvedor** (canto superior direito).
+3. Clique em **Carregar sem compactação** e selecione a pasta `dist/`.
+4. Abra uma nova guia. ✨
+
+## Publicar na Chrome Web Store
+
+```bash
+cd dist && zip -r ../extension.zip . && cd ..
+```
+
+Envie o `extension.zip` no [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole).
+
+Na ficha de publicação, justifique as permissões:
+
+| Permissão | Justificativa |
+|---|---|
+| `storage` | Salvar preferências, temas, tarefas, notas e eventos do usuário. |
+| `geolocation` | Widget de clima (localização local, nunca enviada a terceiros além da API de clima). |
+| `bookmarks` | Sugestões de favoritos na barra de busca. |
+| `topSites` | Preencher os links rápidos iniciais. |
+| `scripting` + `<all_urls>` | Controle de mídia da Ilha Dinâmica: play/pause/next na aba que está tocando áudio (YouTube, Spotify Web, etc.). |
+| `clipboardRead` | Ferramenta de tradução da Ilha Dinâmica (ler texto copiado quando o usuário pede). |
+| Content script `<all_urls>` | Exibe a Ilha Dinâmica flutuante nas páginas (overlay em Shadow DOM, sem ler dados da página). |
+
+## Chave de API do Gemini
+
+Os recursos de IA (chat, frases, horóscopo, insights) usam a chave **que o usuário informa nas Configurações** da própria extensão. A chave fica no `chrome.storage.local` do dispositivo e nunca é sincronizada nem embutida no pacote.
+
+## Desenvolvimento web (sem extensão)
+
+```bash
+npm run dev
+```
+
+O app roda como página web comum — as APIs `chrome.*` têm fallback para `localStorage`.

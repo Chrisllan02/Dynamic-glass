@@ -82,9 +82,10 @@ const UnicornStudioBackground: React.FC<{ projectId: string }> = ({ projectId })
     };
 
     if (!document.getElementById(scriptId)) {
+        // Script empacotado localmente (MV3 proíbe carregar código remoto)
         const script = document.createElement("script");
         script.id = scriptId;
-        script.src = "https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v1.4.29/dist/unicornStudio.umd.js";
+        script.src = "/vendor/unicornStudio.umd.js";
         script.onload = initUnicorn;
         document.head.appendChild(script);
     } else {

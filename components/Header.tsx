@@ -158,7 +158,7 @@ export const Header: React.FC<HeaderProps> = ({
                      setIslandConfig={setIslandConfig}
                      clockConfig={clockConfig}
                      setClockConfig={setClockConfig || (() => {})}
-                     animationOverride={animationOverride}
+                     animationOverride={animationOverride || 'auto'}
                      setAnimationOverride={setAnimationOverride || (() => {})}
                      toggleFocusMode={toggleFocusMode || (() => {})}
                      focusMode={focusMode}

@@ -94,6 +94,7 @@ export const getTechFact = async (): Promise<TechFactData> => {
         }
       }
     });
+    if (!response.text) throw new Error("No data");
     return JSON.parse(response.text) as TechFactData;
   } catch (error) {
     return { fact: "O primeiro bug de computador foi um inseto real (uma mariposa) encontrado em um Harvard Mark II em 1947.", category: "Pioneiros" };
