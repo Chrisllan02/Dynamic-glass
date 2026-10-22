@@ -6,7 +6,6 @@ import { CalendarEvent, TodoTask, Priority } from '../types';
 import { uiSounds } from '../services/soundService';
 import { analyzePlannerData, analyzePerformanceHistory } from '../services/geminiService';
 
-// Fix: Declare chrome variable to resolve 'Cannot find name chrome' in browser/extension contexts
 declare var chrome: any;
 
 interface UnifiedPlannerWidgetProps {
@@ -53,7 +52,6 @@ export const UnifiedPlannerWidget: React.FC<UnifiedPlannerWidgetProps> = ({ isDa
   const [selectedTime, setSelectedTime] = useState('');
   const [isListening, setIsListening] = useState(false);
 
-  // DND State
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [isDraggingOverDelete, setIsDraggingOverDelete] = useState(false);
 
@@ -76,7 +74,6 @@ export const UnifiedPlannerWidget: React.FC<UnifiedPlannerWidgetProps> = ({ isDa
     const handleStorageChange = (changes: any) => {
         if (changes[STORAGE_KEYS.TODO_TASKS]) setTasks(changes[STORAGE_KEYS.TODO_TASKS].newValue || []);
         if (changes[STORAGE_KEYS.CALENDAR_EVENTS]) setEvents(changes[STORAGE_KEYS.CALENDAR_EVENTS].newValue || {});
-        // Note: We don't sync notes real-time here to avoid typing conflicts, we rely on local state + save
     };
 
     if (typeof chrome !== 'undefined' && chrome.storage) {
@@ -88,7 +85,6 @@ export const UnifiedPlannerWidget: React.FC<UnifiedPlannerWidgetProps> = ({ isDa
   const saveTasks = (updated: TodoTask[]) => { setTasks(updated); storage.set(STORAGE_KEYS.TODO_TASKS, updated); };
   const saveEvents = (updated: Record<string, CalendarEvent[]>) => { setEvents(updated); storage.set(STORAGE_KEYS.CALENDAR_EVENTS, updated); };
 
-  // Note Auto-Save Logic
   useEffect(() => {
       const timer = setTimeout(() => {
           if (noteStatus === 'saving') {
@@ -207,7 +203,6 @@ export const UnifiedPlannerWidget: React.FC<UnifiedPlannerWidgetProps> = ({ isDa
   const textPrimary = isDarkMode ? 'text-white' : 'text-slate-800';
   const textSecondary = isDarkMode ? 'text-white/60' : 'text-slate-500';
 
-  // DND Handlers
   const handleDragStart = (e: React.DragEvent, id: string) => {
     setDraggedTaskId(id);
     e.dataTransfer.effectAllowed = 'move';

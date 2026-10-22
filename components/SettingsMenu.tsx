@@ -56,7 +56,6 @@ const THEME_LABELS: Record<ThemeId, string> = {
   book: 'Space'
 };
 
-// CSS Patterns that mimic the 3D/Canvas scenes accurately
 const THEME_PREVIEWS: Record<ThemeId, string> = {
   liquid: 'linear-gradient(135deg, #000 0%, #1e1b4b 40%, #4338ca 70%, #ec4899 100%)',
   default: 'radial-gradient(circle at 50% 120%, #f55702 0%, #7c2d12 40%, #000 80%)',
@@ -83,7 +82,6 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   const [activeTab, setActiveTab] = useState<TabOption>('general');
   const [soundEnabled, setSoundEnabled] = useState(true);
   
-  // API Key State
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [savedKeyMasked, setSavedKeyMasked] = useState('');
   const [showKeyInput, setShowKeyInput] = useState(false);
@@ -91,7 +89,6 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   useEffect(() => {
       storage.get<boolean>(STORAGE_KEYS.UI_SOUNDS).then(enabled => setSoundEnabled(enabled !== false));
       
-      // Load stored API key
       storage.get<string>(STORAGE_KEYS.USER_API_KEY).then(key => {
           if (key) {
               setSavedKeyMasked(key.slice(0, 4) + '...' + key.slice(-4));
@@ -111,7 +108,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
       setApiKeyInput('');
       setShowKeyInput(false);
       
-      window.dispatchEvent(new Event('lumina-apikey-changed')); // Notify components
+      window.dispatchEvent(new Event('lumina-apikey-changed'));
       uiSounds.success();
   };
 

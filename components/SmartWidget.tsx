@@ -29,7 +29,6 @@ export const SmartWidget: React.FC<SmartWidgetProps> = ({ id, isDarkMode, mode, 
   const textPrimary = isDarkMode ? 'text-white' : 'text-slate-800';
   const textSecondary = isDarkMode ? 'text-white/60' : 'text-slate-500';
 
-  // 1. NATIVE WIDGETS
   if (mode === 'widget') {
     if (id === 'weather') return <WeatherWidget isDarkMode={isDarkMode} focusMode={focusMode} />;
     if (id === 'planner') return <UnifiedPlannerWidget isDarkMode={isDarkMode} focusMode={focusMode} />;
@@ -38,7 +37,6 @@ export const SmartWidget: React.FC<SmartWidgetProps> = ({ id, isDarkMode, mode, 
     if (id === 'reminders') return <RemindersWidget isDarkMode={isDarkMode} focusMode={focusMode} />;
   }
 
-  // 2. CONTENT CARDS
   const renderContent = () => {
     switch (id) {
       case 'quote': return <DailyInspiration isDarkMode={isDarkMode} />;
@@ -84,7 +82,6 @@ export const SmartWidget: React.FC<SmartWidgetProps> = ({ id, isDarkMode, mode, 
     );
   }
 
-  // --- WIDGET MODE (GENERIC CONTAINER) ---
   return (
     <div 
         className="flex flex-col items-start gap-2 animate-[fadeIn_1s_ease-out] pointer-events-auto"
@@ -120,7 +117,6 @@ export const SmartWidget: React.FC<SmartWidgetProps> = ({ id, isDarkMode, mode, 
                 </div>
             </div>
 
-            {/* Expanded Content */}
             <div className={`
                 transition-all duration-[500ms] ease-[cubic-bezier(0.25,0.8,0.25,1)] overflow-hidden border-t
                 ${isDarkMode ? 'border-white/10' : 'border-black/5'}

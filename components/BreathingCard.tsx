@@ -15,12 +15,12 @@ export const BreathingCard: React.FC<BreathingCardProps> = ({ isDarkMode }) => {
         setPhase('Segure');
         setTimeout(() => {
           setPhase('Expire');
-        }, 2000); // Hold for 2s
-      }, 4000); // Inhale for 4s
+        }, 2000);
+      }, 4000);
     };
 
     cycle();
-    const interval = setInterval(cycle, 10000); // Total 10s cycle (4+2+4)
+    const interval = setInterval(cycle, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -29,7 +29,6 @@ export const BreathingCard: React.FC<BreathingCardProps> = ({ isDarkMode }) => {
 
   return (
     <div className="flex items-center justify-center h-full w-full gap-4 animate-[fadeIn_0.5s]">
-       {/* Visual Circle */}
        <div className="relative flex items-center justify-center w-14 h-14 flex-shrink-0">
           <div className={`
             absolute inset-0 rounded-full border-2 transition-all duration-[4000ms] ease-in-out
@@ -39,7 +38,6 @@ export const BreathingCard: React.FC<BreathingCardProps> = ({ isDarkMode }) => {
           <div className={`w-2 h-2 rounded-full ${isDarkMode ? 'bg-white' : 'bg-slate-800'}`}></div>
        </div>
 
-       {/* Text Instruction - Flex-shrink prevents it from pushing out */}
        <div className="flex flex-col items-start min-w-[80px]">
           <span className={`text-[10px] font-bold uppercase tracking-widest opacity-50 ${textColor}`}>
             Respire

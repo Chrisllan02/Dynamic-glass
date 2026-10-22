@@ -20,7 +20,6 @@ const LANGUAGES: LanguageOption[] = [
 ];
 
 export const useIslandTools = () => {
-    // Translator State
     const [translateData, setTranslateData] = useState({ 
         input: '', 
         output: '', 
@@ -28,7 +27,7 @@ export const useIslandTools = () => {
         targetLang: 'en-US', 
         loading: false,
         isListening: false,
-        isSpeaking: false // New state for TTS visual feedback
+        isSpeaking: false
     });
 
     const recognitionRef = useRef<any>(null);
@@ -39,12 +38,10 @@ export const useIslandTools = () => {
 
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
-        utterance.rate = 1; // Natural speed
+        utterance.rate = 1;
         utterance.pitch = 1;
         
-        // Find best voice
         const voices = window.speechSynthesis.getVoices();
-        // Try to find Google voices first as they are usually higher quality
         const preferredVoice = voices.find(v => v.lang === lang && v.name.includes('Google')) || 
                                voices.find(v => v.lang === lang);
                                
@@ -90,8 +87,8 @@ export const useIslandTools = () => {
 
         const recognition = new SpeechRecognition();
         recognition.lang = translateData.sourceLang;
-        recognition.continuous = false; // Stop after one sentence to translate immediately
-        recognition.interimResults = true; // SHOW TEXT WHILE SPEAKING
+        recognition.continuous = false;
+        recognition.interimResults = true;
 
         recognition.onstart = () => {
             uiSounds.toggleOn();
@@ -114,12 +111,10 @@ export const useIslandTools = () => {
                 }
             }
 
-            // Update UI immediately with interim results
             if (interimTranscript) {
                 setTranslateData(d => ({ ...d, input: interimTranscript }));
             }
 
-            // Trigger translation only on final result
             if (finalTranscript) {
                 setTranslateData(d => ({ ...d, input: finalTranscript }));
                 uiSounds.success();
@@ -137,7 +132,7 @@ export const useIslandTools = () => {
             ...d,
             sourceLang: d.targetLang,
             targetLang: d.sourceLang,
-            input: d.output, // Swap text context
+            input: d.output,
             output: d.input
         }));
     };

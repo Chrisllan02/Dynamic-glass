@@ -13,7 +13,6 @@ interface GoogleAppsMenuProps {
   isDarkMode?: boolean;
 }
 
-// Mapeamento para ícones do Material Symbols (Google Fonts)
 const categories = [
   {
     title: "Essenciais",
@@ -40,9 +39,9 @@ const categories = [
   {
     title: "Explorar",
     items: [
-      { id: 'youtube', name: 'YouTube', url: 'https://www.youtube.com/', icon: 'smart_display' }, // ou play_circle
+      { id: 'youtube', name: 'YouTube', url: 'https://www.youtube.com/', icon: 'smart_display' },
       { id: 'news', name: 'Notícias', url: 'https://news.google.com/', icon: 'newspaper' },
-      { id: 'play', name: 'Play Store', url: 'https://play.google.com/store', icon: 'shop' }, // ou shopping_bag
+      { id: 'play', name: 'Play Store', url: 'https://play.google.com/store', icon: 'shop' },
       { id: 'translate', name: 'Tradutor', url: 'https://translate.google.com/', icon: 'translate' },
       { id: 'earth', name: 'Earth', url: 'https://earth.google.com/web/', icon: 'public' },
       { id: 'arts', name: 'Arts', url: 'https://artsandculture.google.com/', icon: 'palette' },
@@ -67,14 +66,12 @@ interface AppTileProps {
 }
 
 const AppTile: React.FC<AppTileProps> = ({ app, isDarkMode }) => {
-  // Visual Styles - Refined borders and opacity
   const containerClasses = isDarkMode 
     ? 'bg-gradient-to-br from-white/20 to-white/10 border border-white/50 group-hover:border-white/70 group-hover:from-white/30 group-hover:to-white/20' 
     : 'bg-gradient-to-br from-white/90 to-white/70 border border-black/10 group-hover:border-black/30 group-hover:from-white group-hover:to-white/80 shadow-sm';
     
   const textColor = isDarkMode ? 'text-white/90 group-hover:text-white' : 'text-slate-700 group-hover:text-slate-900';
   
-  // Icon Colors
   const iconColor = isDarkMode ? 'text-white/95' : 'text-slate-800';
 
   return (
@@ -85,7 +82,6 @@ const AppTile: React.FC<AppTileProps> = ({ app, isDarkMode }) => {
       className={`group flex flex-col items-center gap-2 p-2 rounded-2xl transition-all duration-300 active:scale-95`}
       title={app.name}
     >
-      {/* Icon Container (Squircle) */}
       <div className={`
         relative w-14 h-14 rounded-[20px] flex items-center justify-center 
         backdrop-blur-md transition-all duration-300
@@ -98,7 +94,6 @@ const AppTile: React.FC<AppTileProps> = ({ app, isDarkMode }) => {
           </span>
       </div>
 
-      {/* Label */}
       <span className={`text-[10px] font-medium tracking-tight text-center truncate w-full px-1 transition-colors ${textColor}`}>
           {app.name}
       </span>
@@ -127,12 +122,10 @@ export const GoogleAppsMenu: React.FC<GoogleAppsMenuProps> = ({ isDarkMode = tru
 
   const sectionTitleColor = isDarkMode ? 'text-white/60' : 'text-slate-500';
   
-  // Liquid Input Style - Refined
   const inputBg = isDarkMode 
     ? 'bg-black/40 border-white/30 text-white placeholder-white/60 focus:bg-black/60 focus:border-white/50' 
     : 'bg-white/70 border-black/15 text-slate-800 placeholder-slate-500 focus:bg-white/90 focus:border-black/30';
 
-  // --- REFINED SCROLLBAR ---
   const scrollbarStyles = `
     .google-apps-scroll {
       scrollbar-width: thin;
@@ -164,7 +157,6 @@ export const GoogleAppsMenu: React.FC<GoogleAppsMenuProps> = ({ isDarkMode = tru
       <div className="flex flex-col h-full w-full">
         <style>{scrollbarStyles}</style>
 
-        {/* Header & Search - Sticky */}
         <div className={`flex-shrink-0 px-5 pt-5 pb-3 space-y-3 z-20 border-b transition-colors ${isDarkMode ? 'border-white/20 bg-white/[0.08]' : 'border-black/10 bg-white/50'}`}>
            <div className="flex items-center justify-between">
               <h3 className={`text-sm font-semibold pl-1 tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Workspace</h3>
@@ -173,7 +165,6 @@ export const GoogleAppsMenu: React.FC<GoogleAppsMenuProps> = ({ isDarkMode = tru
               </div>
            </div>
            
-           {/* Search Bar */}
            <div className="relative group">
               <div className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${isDarkMode ? 'text-white/60 group-focus-within:text-white' : 'text-slate-500 group-focus-within:text-blue-500'}`}>
                   <span className="material-symbols-outlined !text-[20px]">search</span>
@@ -197,7 +188,6 @@ export const GoogleAppsMenu: React.FC<GoogleAppsMenuProps> = ({ isDarkMode = tru
            </div>
         </div>
 
-        {/* Scrollable Grid */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 pt-2 pb-4 google-apps-scroll scroll-smooth relative z-10">
           
           {filteredCategories.length > 0 ? (
@@ -227,7 +217,6 @@ export const GoogleAppsMenu: React.FC<GoogleAppsMenuProps> = ({ isDarkMode = tru
               </div>
           )}
 
-          {/* Footer Link */}
           {!searchTerm && (
               <div className="flex justify-center mt-4 mb-2 transition-opacity duration-500" style={{ opacity: isVisible ? 1 : 0 }}>
                   <a 

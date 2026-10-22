@@ -3,13 +3,11 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { QuoteData, HoroscopeData, TechFactData, TodoTask, CalendarEvent } from "../types";
 import { storage, STORAGE_KEYS } from "./storageService";
 
-// Helper to retrieve API key securely from storage or fallback to env (dev mode)
-const getApiKey = async (): Promise<string | undefined> => {
+const getApiKey = async (): Promise<string | null> => {
     const storedKey = await storage.get<string>(STORAGE_KEYS.USER_API_KEY);
-    return storedKey || process.env.API_KEY;
+    return storedKey;
 };
 
-// Helper to get a default quote if API fails
 const getDefaultQuote = (): QuoteData => ({
   text: "A simplicidade é o último grau de sofisticação.",
   author: "Leonardo da Vinci"
@@ -94,7 +92,7 @@ export const getTechFact = async (): Promise<TechFactData> => {
         }
       }
     });
-    return JSON.parse(response.text) as TechFactData;
+    return JSON.parse(response.text ?? "") as TechFactData;
   } catch (error) {
     return { fact: "O primeiro bug de computador foi um inseto real (uma mariposa) encontrado em um Harvard Mark II em 1947.", category: "Pioneiros" };
   }
@@ -119,11 +117,9 @@ export const getChatResponse = async (
     };
 
     if (mode === 'think') {
-        // Thinking Mode for complex reasoning
         model = "gemini-3-pro-preview";
         config.thinkingConfig = { thinkingBudget: 32768 };
     } else {
-        // Search Grounding Mode (Default)
         config.tools = [{ googleSearch: {} }];
     }
 
@@ -137,7 +133,6 @@ export const getChatResponse = async (
     
     let sources: { title: string, uri: string }[] = [];
     
-    // Extract Grounding Data (Only relevant in search mode)
     const chunks = result.candidates?.[0]?.groundingMetadata?.groundingChunks;
     if (chunks) {
         sources = chunks

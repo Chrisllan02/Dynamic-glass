@@ -18,12 +18,11 @@ const initAudio = () => {
 const checkEnabled = async () => {
   if (soundEnabled === null) {
     const enabled = await storage.get<boolean>(STORAGE_KEYS.UI_SOUNDS);
-    soundEnabled = enabled !== false; // Default true
+    soundEnabled = enabled !== false;
   }
   return soundEnabled;
 };
 
-// Update cache when settings change
 export const refreshSoundSettings = async () => {
     const enabled = await storage.get<boolean>(STORAGE_KEYS.UI_SOUNDS);
     soundEnabled = enabled !== false;
@@ -49,8 +48,8 @@ const playTone = async (freq: number, type: OscillatorType, duration: number, vo
 };
 
 export const uiSounds = {
-  hover: () => playTone(800, 'sine', 0.05, 0.02), // Ultra quiet tick
-  click: () => playTone(600, 'triangle', 0.1, 0.05), // Soft thud
+  hover: () => playTone(800, 'sine', 0.05, 0.02),
+  click: () => playTone(600, 'triangle', 0.1, 0.05),
   toggleOn: () => {
       playTone(400, 'sine', 0.1, 0.05);
       setTimeout(() => playTone(600, 'sine', 0.1, 0.05), 50);

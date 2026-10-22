@@ -9,9 +9,7 @@ interface HeaderProps {
   currentTheme?: ThemeId;
   setTheme?: (theme: ThemeId) => void;
   isDarkMode?: boolean;
-  // Removed setIsDarkMode
   
-  // Link Props
   quickLinks?: QuickLink[];
   showQuickLinks?: boolean;
   setShowQuickLinks?: (show: boolean) => void;
@@ -19,38 +17,29 @@ interface HeaderProps {
   onRemoveLink?: (id: string) => void;
   onReorderLink?: (id: string, direction: 'up' | 'down') => void;
 
-  // Module Config
   moduleConfig: ModuleConfig;
   setModuleConfig: (config: ModuleConfig) => void;
   
-  // Island Config
   islandConfig: IslandConfig;
   setIslandConfig: (config: IslandConfig) => void;
 
-  // Clock Props
   clockConfig?: ClockConfig;
   setClockConfig?: (config: ClockConfig) => void;
 
-  // Animation Override
   animationOverride?: AnimationStyle;
   setAnimationOverride?: (anim: AnimationStyle) => void;
 
-  // Focus
   toggleFocusMode?: () => void;
   focusMode?: boolean;
   
-  // Zen
   toggleZenMode?: () => void;
   zenMode?: boolean;
 
-  // User
   userName?: string;
   setUserName?: (name: string) => void;
 
-  // Tour
   onRestartTour?: () => void;
 
-  // Blur
   blurStrength?: number;
   setBlurStrength?: (val: number) => void;
 }
@@ -89,7 +78,6 @@ export const Header: React.FC<HeaderProps> = ({
   const appsRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
 
-  // Auto-collapse menus when Focus Mode toggles
   useEffect(() => {
     if (focusMode) {
         setIsAppsOpen(false);
@@ -130,7 +118,6 @@ export const Header: React.FC<HeaderProps> = ({
     >
         <div className="flex items-center gap-2 animate-[fadeIn_1s_ease-out] pointer-events-auto">
           
-          {/* Settings */}
           <div className="relative" ref={settingsRef} id="header-settings-btn">
               <button 
                 onClick={() => { setIsSettingsOpen(!isSettingsOpen); setIsAppsOpen(false); }}
@@ -158,7 +145,7 @@ export const Header: React.FC<HeaderProps> = ({
                      setIslandConfig={setIslandConfig}
                      clockConfig={clockConfig}
                      setClockConfig={setClockConfig || (() => {})}
-                     animationOverride={animationOverride}
+                     animationOverride={animationOverride ?? 'auto'}
                      setAnimationOverride={setAnimationOverride || (() => {})}
                      toggleFocusMode={toggleFocusMode || (() => {})}
                      focusMode={focusMode}
@@ -174,7 +161,6 @@ export const Header: React.FC<HeaderProps> = ({
               )}
           </div>
 
-          {/* Google Apps */}
           <div className="relative" ref={appsRef} id="header-apps-btn">
             <button 
               onClick={() => { setIsAppsOpen(!isAppsOpen); setIsSettingsOpen(false); }}
@@ -191,7 +177,6 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* Avatar */}
           <div className="relative group cursor-pointer ml-2">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full opacity-0 group-hover:opacity-75 blur transition duration-500"></div>
             <div className={`relative h-9 w-9 rounded-full overflow-hidden border-2 border-transparent group-hover:border-white/50 transition-all ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'} flex items-center justify-center`}>

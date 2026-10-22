@@ -76,7 +76,6 @@ const DraggableWidget: React.FC<DraggableWidgetProps> = ({ id, isDarkMode, onDra
       draggable={true}
       data-widget-id={id}
       onDragStart={(e) => {
-        // Prevent dragging if interacting with inputs, textareas, or scrollbars
         const target = e.target as HTMLElement;
         if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A'].includes(target.tagName) || target.isContentEditable) {
             e.preventDefault();
@@ -88,7 +87,6 @@ const DraggableWidget: React.FC<DraggableWidgetProps> = ({ id, isDarkMode, onDra
         e.dataTransfer.setData('widgetId', id);
         e.dataTransfer.effectAllowed = 'move';
         
-        // Visual feedback
         e.currentTarget.style.opacity = '0.4';
         e.currentTarget.style.transform = 'scale(0.95)';
       }}
@@ -102,7 +100,6 @@ const DraggableWidget: React.FC<DraggableWidgetProps> = ({ id, isDarkMode, onDra
         hover:z-10
       `}
     >
-      {/* Hover Drag Handle Indicator */}
       <div className={`
         absolute -top-3 left-1/2 -translate-x-1/2 
         w-12 h-1.5 rounded-full 
@@ -128,7 +125,6 @@ export default function App() {
   const [displayTheme, setDisplayTheme] = useState<ThemeId>('fresh');
   const [isThemeTransitioning, setIsThemeTransitioning] = useState(false);
 
-  // Forced Dark Mode
   const isDarkMode = true;
 
   const [animationOverride, setAnimationOverride] = useState<AnimationStyle>('auto');
@@ -143,12 +139,10 @@ export default function App() {
   const [clockConfig, setClockConfig] = useState<ClockConfig>(DEFAULT_CLOCK_CONFIG);
   const [layout, setLayout] = useState<LayoutConfig>(DEFAULT_LAYOUT);
   
-  // Dragging State
   const [isDragging, setIsDragging] = useState(false);
   const [dragOverZone, setDragOverZone] = useState<ZoneId | null>(null);
   
   const [userName, setUserName] = useState('');
-  // Removed isEditMode state as it is now implicit
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [blurStrength, setBlurStrength] = useState(45); 
 
@@ -163,7 +157,6 @@ export default function App() {
     };
   }, []);
 
-  // Sync missing widgets to layout when enabled
   useEffect(() => {
     if (!loaded) return;
 
@@ -177,7 +170,6 @@ export default function App() {
 
         if (missingIds.length === 0) return prevLayout;
 
-        // Add missing widgets to top-right by default to balance the layout
         const newLayout = { ...prevLayout };
         newLayout['top-right'] = [...newLayout['top-right'], ...missingIds];
         
@@ -211,10 +203,8 @@ export default function App() {
   useEffect(() => {
     const loadPreferences = async () => {
       try {
-        // --- ONBOARDING LOGIC UPDATE ---
         let onboardingDone = await storage.get<boolean>(STORAGE_KEYS.ONBOARDING_COMPLETED);
         
-        // If onboarding flag is missing, assume it's done (as per user request)
         if (!onboardingDone) {
             await storage.set(STORAGE_KEYS.ONBOARDING_COMPLETED, true);
             await storage.set(STORAGE_KEYS.USER_NAME, 'Visitante');
@@ -238,11 +228,9 @@ export default function App() {
           setSelectedTheme('fresh');
           setDisplayTheme('fresh');
         }
-        // Removed dark mode loading
         const savedAnim = await storage.get<AnimationStyle>(STORAGE_KEYS.ANIMATION);
         if (savedAnim) setAnimationOverride(savedAnim);
         
-        // --- LINKS LOADING LOGIC ---
         const savedLinks = await storage.get<QuickLink[]>(STORAGE_KEYS.LINKS);
         if (savedLinks && savedLinks.length > 0) {
           setQuickLinks(savedLinks);
@@ -323,7 +311,6 @@ export default function App() {
       document.documentElement.style.setProperty('--glass-blur', `${blurStrength}px`);
   }, [blurStrength]);
 
-  // Removed dark mode storage effect
   useEffect(() => { if (loaded) storage.set(STORAGE_KEYS.ANIMATION, animationOverride); }, [animationOverride, loaded]);
   useEffect(() => { if (loaded) storage.set(STORAGE_KEYS.LINKS, quickLinks); }, [quickLinks, loaded]);
   useEffect(() => { if (loaded) storage.set(STORAGE_KEYS.SHOW_LINKS, showQuickLinks); }, [showQuickLinks, loaded]);
@@ -425,7 +412,6 @@ export default function App() {
 
   const renderZone = (zoneId: ZoneId, extraClasses: string = '') => {
       const isOver = dragOverZone === zoneId;
-      // Show dashed border only when dragging
       let zoneClasses = `flex flex-col gap-6 transition-all duration-300 rounded-3xl p-4 min-w-[240px] min-h-[120px] relative ${extraClasses} `;
       
       if (isDragging) {
@@ -435,7 +421,6 @@ export default function App() {
 
       const widgetsToRender = layout[zoneId].filter(id => moduleConfig[id] === 'widget');
       
-      // If empty and not dragging, collapse slightly but keep layout structure
       if (widgetsToRender.length === 0 && !isDragging) {
           return <div className={`flex flex-col gap-6 p-4 min-w-[240px] min-h-[50px] relative ${extraClasses}`} 
                       onDragOver={(e) => handleDragOver(e, zoneId)} 
@@ -446,7 +431,6 @@ export default function App() {
       return (
         <div className={zoneClasses} onDragOver={(e) => handleDragOver(e, zoneId)} onDragLeave={(e) => handleDragLeave(e, zoneId)} onDrop={(e) => handleDrop(e, zoneId)}>
             {widgetsToRender.map(widgetId => renderWidget(widgetId))}
-            {/* Visual placeholder for empty zone when dragging */}
             {widgetsToRender.length === 0 && isDragging && (
                 <div className="absolute inset-0 flex items-center justify-center text-xs font-bold uppercase opacity-30 tracking-widest pointer-events-none">
                     Soltar aqui
@@ -513,7 +497,6 @@ export default function App() {
             <Clock isDarkMode={isDarkMode} config={clockConfig} />
           </div>
           
-          {/* FOCUS GOAL OVERLAY - IMPROVED */}
           <div className={`w-full flex justify-center mt-0 z-[100] transition-all duration-1000 absolute top-[10%] left-0 right-0 ${focusMode ? 'opacity-100 pointer-events-auto translate-y-0 scale-100' : 'opacity-0 pointer-events-none translate-y-20 scale-90 blur-xl'}`}>
               <FocusGoal goal={focusGoal} setGoal={setFocusGoal} isDarkMode={isDarkMode} onExit={() => setFocusMode(false)} />
           </div>

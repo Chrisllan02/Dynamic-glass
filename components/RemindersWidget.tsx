@@ -14,7 +14,6 @@ export const RemindersWidget: React.FC<RemindersWidgetProps> = ({ isDarkMode, fo
   const [newReminder, setNewReminder] = useState('');
   const [expanded, setExpanded] = useState(false);
 
-  // Auto-collapse
   useEffect(() => {
     setExpanded(false);
   }, [focusMode]);
@@ -57,12 +56,10 @@ export const RemindersWidget: React.FC<RemindersWidgetProps> = ({ isDarkMode, fo
     saveReminders(updated);
   };
 
-  // Styling
   const textPrimary = isDarkMode ? 'text-white' : 'text-slate-800';
   const textSecondary = isDarkMode ? 'text-white/70' : 'text-slate-500';
   const textCompleted = isDarkMode ? 'text-white/40 line-through decoration-white/30' : 'text-slate-400 line-through decoration-slate-400';
   
-  // More visible input
   const inputBg = isDarkMode 
     ? 'bg-black/40 text-white placeholder-white/60 border border-white/30 focus:border-white/50' 
     : 'bg-white border border-black/10 text-slate-800 placeholder-slate-400 focus:border-black/20';
@@ -83,7 +80,6 @@ export const RemindersWidget: React.FC<RemindersWidgetProps> = ({ isDarkMode, fo
                 ${expanded ? 'w-[340px] h-auto' : 'w-[200px] h-[64px]'}
             `}
         >
-            {/* Header */}
             <div 
                 className={`flex items-center justify-between px-5 w-full transition-all duration-300 ${expanded ? 'py-5' : 'h-[64px]'}`}
                 onClick={() => setExpanded(!expanded)}
@@ -117,7 +113,6 @@ export const RemindersWidget: React.FC<RemindersWidgetProps> = ({ isDarkMode, fo
                 </div>
             </div>
 
-            {/* List */}
             <div className={`
                 transition-all duration-[500ms] ease-[cubic-bezier(0.25,0.8,0.25,1)] overflow-hidden border-t
                 ${isDarkMode ? 'border-white/20' : 'border-black/10'}

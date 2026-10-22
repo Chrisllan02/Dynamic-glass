@@ -85,7 +85,6 @@ export const Clock: React.FC<ClockProps> = ({
   };
 
   const getColorClass = () => {
-      // Liquid Glass Effect: Gradient transparency + Clip + Subtle Shadow
       return 'bg-gradient-to-b from-white via-white/80 to-white/20 text-transparent bg-clip-text drop-shadow-[0_4px_12px_rgba(0,0,0,0.1)]';
   };
 

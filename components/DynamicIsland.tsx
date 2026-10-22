@@ -47,35 +47,29 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const lastActiveApp = useRef<IslandState>('menu');
   
-  // Chat State
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isChatLoading, setIsChatLoading] = useState(false);
-  const [isThinkingMode, setIsThinkingMode] = useState(false); // Toggle for Deep Research
+  const [isThinkingMode, setIsThinkingMode] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Timer Edit State
   const [isEditingTime, setIsEditingTime] = useState(false);
   const [inputTime, setInputTime] = useState('');
 
-  // Camera State
   const videoRef = useRef<HTMLVideoElement>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [cameraError, setCameraError] = useState('');
 
-  // Calendar State
   const [calendarEvents, setCalendarEvents] = useState<Record<string, CalendarEvent[]>>({});
   const [newEventInput, setNewEventInput] = useState('');
   const [displayDate, setDisplayDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  // Calculator State
   const [calcDisplay, setCalcDisplay] = useState('0');
   const [calcHistory, setCalcHistory] = useState('');
 
-  // Custom Hooks
   const { 
       audioRef, playerState, currentTrack, 
       toggleMusic, nextTrack, prevTrack, 
@@ -87,10 +81,8 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
       translateData, setTranslateData, handleTranslate, toggleListening, swapLanguages, setLanguage, speakText, LANGUAGES
   } = useIslandTools();
 
-  // Focus Timer State
   const [focusData, setFocusData] = useState({ timeLeft: 25 * 60, isRunning: false, totalTime: 25 * 60 });
 
-  // Listen for Focus updates
   useEffect(() => {
       const handleFocusUpdate = (e: CustomEvent) => {
           const { timeLeft, isRunning, totalTime } = e.detail.payload;
@@ -104,21 +96,19 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
       return () => window.removeEventListener('lumina-update' as any, handleFocusUpdate as any);
   }, []);
 
-  // Listen for AI Search Trigger (from SearchBar)
   useEffect(() => {
       const handleAiSearch = (e: CustomEvent) => {
           const query = e.detail.query;
           handleStateChange('ask-ai');
           if (query) {
               setChatInput(query);
-              setTimeout(() => handleChatSend(undefined, query), 500); // Small delay to allow UI transition
+              setTimeout(() => handleChatSend(undefined, query), 500);
           }
       };
       window.addEventListener('lumina-ai-search' as any, handleAiSearch as any);
       return () => window.removeEventListener('lumina-ai-search' as any, handleAiSearch as any);
   }, []);
 
-  // Initialize: Load last state
   useEffect(() => {
       const loadState = async () => {
           const savedState = await storage.get<IslandState>(STORAGE_KEYS.LAST_ISLAND_APP);
@@ -129,12 +119,10 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
       loadState();
   }, []);
 
-  // Listen for API Key updates
   useEffect(() => {
       const checkApiKey = async () => {
-          // Check storage for user key, fallback to env (dev mode)
           const storedKey = await storage.get<string>(STORAGE_KEYS.USER_API_KEY);
-          setHasApiKey(!!storedKey || !!process.env.API_KEY);
+          setHasApiKey(!!storedKey);
       };
       checkApiKey();
       
@@ -143,21 +131,18 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
       return () => window.removeEventListener('lumina-apikey-changed', handleKeyUpdate);
   }, []);
 
-  // Sync Sphere with Playing State
   useEffect(() => {
       if (playerState.isPlaying) {
           setIsMusicSessionActive(true);
       }
   }, [playerState.isPlaying]);
 
-  // Chat Auto Scroll
   useEffect(() => {
       if (state === 'ask-ai') {
           chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }
   }, [chatMessages, state]);
 
-  // Camera Lifecycle
   useEffect(() => {
     if (state === 'camera') {
         startCamera();
@@ -166,14 +151,12 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
     }
   }, [state]);
 
-  // Ensure video element gets stream when it renders
   useEffect(() => {
       if (state === 'camera' && videoRef.current && cameraStream) {
           videoRef.current.srcObject = cameraStream;
       }
   }, [state, cameraStream]);
 
-  // CALENDAR DATA LOADING
   useEffect(() => {
       if (state === 'calendar' || state === 'idle') {
           loadCalendarEvents();
@@ -226,7 +209,6 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
       setCalendarEvents(updatedAll);
   };
 
-  // --- CALCULATOR LOGIC ---
   const handleCalcInput = (val: string) => {
       uiSounds.click();
       if (val === 'AC') {
@@ -236,9 +218,7 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
           setCalcDisplay(prev => prev.length > 1 ? prev.slice(0, -1) : '0');
       } else if (val === '=') {
           try {
-              // Safety clean before eval
               const cleanExp = calcDisplay.replace(/[^0-9+\-*/().]/g, '');
-              // eslint-disable-next-line no-new-func
               const res = new Function('return ' + cleanExp)();
               setCalcHistory(calcDisplay + ' =');
               setCalcDisplay(String(res));
@@ -248,7 +228,6 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
               uiSounds.error();
           }
       } else {
-          // Prevent multiple operators
           const lastChar = calcDisplay.slice(-1);
           const isOp = ['+', '-', '*', '/'].includes(val);
           const lastIsOp = ['+', '-', '*', '/'].includes(lastChar);
@@ -262,7 +241,6 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
   };
 
   const handleStateChange = (newState: IslandState) => {
-      // Remember non-idle, non-menu states
       if (newState !== 'idle' && newState !== 'menu') {
           lastActiveApp.current = newState;
           storage.set(STORAGE_KEYS.LAST_ISLAND_APP, newState);
@@ -298,14 +276,12 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
 
       if (state === 'idle') {
           uiSounds.hover();
-          // Restore last activity or go to menu
           setState(lastActiveApp.current);
           setContentVisible(true);
       }
   };
 
   const handleMouseLeave = () => {
-      // PERSISTENT STATES: Do not auto-close if in camera or calculator mode
       if (state === 'camera' || state === 'calculator') return;
 
       closeTimerRef.current = setTimeout(() => {
@@ -356,7 +332,6 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
       }
   };
 
-  // Timer Controls
   const toggleTimer = (e?: React.MouseEvent) => {
       if (e) e.stopPropagation();
       uiSounds.click();
@@ -376,7 +351,6 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
   const startEditingTime = () => {
       uiSounds.click();
       setIsEditingTime(true);
-      // Guess minutes from current seconds
       setInputTime(Math.ceil(focusData.timeLeft / 60).toString());
   };
 
@@ -389,23 +363,20 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
       setIsEditingTime(false);
   };
 
-  // Camera Controls
   const startCamera = async () => {
       setCameraError('');
 
       try {
-          // Tentativa 1: Vídeo + Áudio
           try {
               const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
               setCameraStream(stream);
               setIsMicMuted(false);
               setIsVideoOff(false);
           } catch (initialErr) {
-              // Tentativa 2: Apenas Vídeo (Fallback se mic for negado/inexistente)
               console.warn("Tentando fallback apenas para vídeo:", initialErr);
               const stream = await navigator.mediaDevices.getUserMedia({ video: true });
               setCameraStream(stream);
-              setIsMicMuted(true); // Forçar mudo visualmente
+              setIsMicMuted(true);
               setIsVideoOff(false);
           }
       } catch (err: any) {
@@ -508,14 +479,14 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
           case 'ask-ai': return { w: 480, h: 360, r: 44 };
           case 'camera': return { w: 400, h: 320, r: 32 };
           case 'calendar': return { w: 480, h: 280, r: 40 };
-          case 'calculator': return { w: 300, h: 440, r: 40 }; // Calculator dimensions
+          case 'calculator': return { w: 300, h: 440, r: 40 };
           default: return { w: 130, h: 40, r: 20 };
       }
   };
 
   const dims = getDimensions();
-  const sphereMarginRight = (dims.w / 2) + 8; // Music Sphere (Right)
-  const sphereMarginLeft = -((dims.w / 2) + 8 + 48); // Focus Sphere (Left) - negative to move left
+  const sphereMarginRight = (dims.w / 2) + 8;
+  const sphereMarginLeft = -((dims.w / 2) + 8 + 48);
 
   const formatTime = (seconds: number) => {
       if (!seconds && seconds !== 0) return "0:00";
@@ -526,17 +497,14 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
 
   const themeColor = currentTrack.color || '#ffffff';
 
-  // SVG Calculation for Timer (144px box -> r=54 fits well)
   const timerRadius = 54; 
   const timerCircumference = 2 * Math.PI * timerRadius;
   const timerOffset = timerCircumference - (focusData.timeLeft / (focusData.totalTime || 1)) * timerCircumference;
 
-  // Small Satellite Timer Calc
   const satRadius = 18;
   const satCircumference = 2 * Math.PI * satRadius;
   const satOffset = satCircumference - (focusData.timeLeft / (focusData.totalTime || 1)) * satCircumference;
 
-  // --- CALENDAR HELPERS ---
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -548,7 +516,6 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
   const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
   const weekDays = ["D", "S", "T", "Q", "Q", "S", "S"];
 
-  // Reusable Back Button
   const BackButton = () => (
     <button 
         onClick={() => { handleStateChange('menu'); uiSounds.click(); }}
@@ -559,21 +526,19 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
     </button>
   );
 
-  // Dynamic Backlight Color Logic
   const getBacklightColor = () => {
       if (state === 'music') return themeColor;
-      if (state === 'focus-timer' || focusData.isRunning) return '#3b82f6'; // Blue
-      if (state === 'ask-ai') return '#a855f7'; // Purple
-      if (state === 'translate') return '#60a5fa'; // Light Blue
-      if (state === 'camera') return '#ffffff'; // White/Red handled elsewhere
-      if (state === 'calculator') return '#f97316'; // Orange
-      return '#ffffff'; // Default White
+      if (state === 'focus-timer' || focusData.isRunning) return '#3b82f6';
+      if (state === 'ask-ai') return '#a855f7';
+      if (state === 'translate') return '#60a5fa';
+      if (state === 'camera') return '#ffffff';
+      if (state === 'calculator') return '#f97316';
+      return '#ffffff';
   };
 
   return (
     <div id="dynamic-island-container" className={`fixed top-4 left-1/2 z-[2147483647] transition-all duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] ${isHidden ? 'opacity-0 -translate-y-24' : 'opacity-100'}`}>
         
-        {/* --- BACKLIGHT ILLUMINATION --- */}
         <div 
             className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 rounded-[60px] transition-all duration-500 ease-in-out pointer-events-none z-0"
             style={{
@@ -585,7 +550,6 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
             }}
         />
 
-        {/* --- MAIN ISLAND (CENTER) --- */}
         <div 
             ref={islandRef} 
             id="dynamic-island-pill"
@@ -604,7 +568,6 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
-            {/* AMBILIGHT GLOW BACKDROP INSIDE */}
             {state === 'music' && (
                 <div 
                     className="absolute inset-0 z-0 opacity-40 blur-[80px] transition-colors duration-1000 bg-gradient-to-r from-transparent via-transparent to-black"
@@ -614,7 +577,6 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
 
             <div className={`w-full h-full relative z-10 transition-all duration-300 ${contentVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
                 
-                {/* IDLE STATE */}
                 {state === 'idle' && (
                     <div 
                         className={`w-full h-full flex items-center cursor-pointer ${
@@ -639,7 +601,6 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
                     </div>
                 )}
 
-                {/* MENU STATE */}
                 {state === 'menu' && (
                     <div className="w-full h-full flex items-center justify-evenly px-4">
                         {[
@@ -661,10 +622,8 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
                     </div>
                 )}
 
-                {/* ASK AI - FUNCTIONAL CHAT */}
                 {state === 'ask-ai' && (
                   <div className="w-full h-full p-0 flex relative bg-black/40 backdrop-blur-md">
-                      {/* Sidebar */}
                       <div className="w-16 h-full border-r border-white/5 flex flex-col items-center py-4 bg-black/20">
                           <AiLiquidIcon scale={0.4} />
                           <div className="mt-auto">
@@ -674,9 +633,7 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
                           </div>
                       </div>
 
-                      {/* Chat Area */}
                       <div className="flex-1 flex flex-col min-w-0">
-                          {/* Messages */}
                           <div className="flex-1 overflow-y-auto p-4 space-y-3 glass-scroll relative">
                               {chatMessages.length === 0 && (
                                   <div className="h-full flex items-center justify-center opacity-30 text-center text-xs">
@@ -684,7 +641,6 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
                                   </div>
                               )}
                               
-                              {/* MODE TOGGLE IN HEADER AREA */}
                               <div className="absolute top-2 right-4 z-20">
                                   <button 
                                      onClick={() => { uiSounds.click(); setIsThinkingMode(!isThinkingMode); }}
@@ -701,7 +657,6 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
                                       <div className={`max-w-[85%] p-2.5 rounded-2xl text-xs leading-relaxed ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white/10 text-white rounded-bl-none'}`}>
                                           {msg.text}
                                       </div>
-                                      {/* Source Chips */}
                                       {msg.sources && msg.sources.length > 0 && (
                                           <div className="flex flex-wrap gap-1.5 max-w-[85%] mt-1">
                                               {msg.sources.map((src, idx) => (
@@ -733,7 +688,6 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
                               <div ref={chatEndRef} />
                           </div>
 
-                          {/* Input */}
                           <div className="p-3 border-t border-white/5 bg-black/20">
                               <form onSubmit={(e) => handleChatSend(e)} className="relative flex items-center gap-2">
                                   <input 
@@ -759,8 +713,6 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
             </div>
         </div>
 
-        {/* ... SATELLITES (Focus/Music) kept unchanged ... */}
-        {/* --- FOCUS TIMER SPHERE (LEFT SATELLITE) --- */}
         <div 
             className={`
                 absolute top-0 left-0
@@ -805,7 +757,6 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
             </div>
         </div>
 
-        {/* --- MUSIC SPHERE (RIGHT SATELLITE) --- */}
         <div 
             className={`
                 absolute top-0 left-0

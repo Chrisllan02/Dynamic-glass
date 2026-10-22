@@ -22,7 +22,6 @@ export const FocusGoal: React.FC<FocusGoalProps> = ({ goal, setGoal, isDarkMode,
   const [subtasks, setSubtasks] = useState<SubTask[]>([]);
   const [newSubtask, setNewSubtask] = useState('');
   
-  // TIMER STATE
   const [timeLeft, setTimeLeft] = useState(25 * 60); 
   const [isRunning, setIsRunning] = useState(false);
   const [isEditingTime, setIsEditingTime] = useState(false);
@@ -30,7 +29,6 @@ export const FocusGoal: React.FC<FocusGoalProps> = ({ goal, setGoal, isDarkMode,
   
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Load Persisted Data
   useEffect(() => {
     const loadData = async () => {
         const savedSubtasks = await storage.get<SubTask[]>(STORAGE_KEYS.FOCUS_SUBTASKS);
@@ -46,14 +44,12 @@ export const FocusGoal: React.FC<FocusGoalProps> = ({ goal, setGoal, isDarkMode,
     loadData();
   }, []);
 
-  // Save State
   useEffect(() => { storage.set(STORAGE_KEYS.FOCUS_SUBTASKS, subtasks); }, [subtasks]);
   useEffect(() => { 
     storage.set('lumina_focus_time_left', timeLeft);
     storage.set('lumina_focus_base_mins', baseMinutes);
   }, [timeLeft, baseMinutes]);
 
-  // ESCUTAR COMANDOS DA ILHA DINÂMICA
   useEffect(() => {
     const handleCommand = (e: any) => {
         if (e.detail.type === 'timer-toggle') {
@@ -74,7 +70,6 @@ export const FocusGoal: React.FC<FocusGoalProps> = ({ goal, setGoal, isDarkMode,
     return () => window.removeEventListener('lumina-command' as any, handleCommand);
   }, []);
 
-  // MOTOR DO TIMER (FIXED)
   useEffect(() => {
     if (isRunning) {
       timerRef.current = setInterval(() => {
@@ -96,7 +91,6 @@ export const FocusGoal: React.FC<FocusGoalProps> = ({ goal, setGoal, isDarkMode,
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isRunning]);
 
-  // SINCRONIZAÇÃO COM A ILHA DINÂMICA (Master -> Slave)
   useEffect(() => {
     const totalTime = baseMinutes * 60;
     window.dispatchEvent(new CustomEvent('lumina-update', {
@@ -202,7 +196,6 @@ export const FocusGoal: React.FC<FocusGoalProps> = ({ goal, setGoal, isDarkMode,
         }
       `}</style>
       
-      {/* TIMER HERO */}
       <div className="relative w-80 h-80 mb-16 flex items-center justify-center group/timer scale-110">
           <svg className="w-full h-full -rotate-90 filter drop-shadow-[0_0_20px_rgba(37,99,235,0.3)]" viewBox="0 0 320 320">
             <defs>
@@ -211,9 +204,7 @@ export const FocusGoal: React.FC<FocusGoalProps> = ({ goal, setGoal, isDarkMode,
                     <stop offset="100%" stopColor="#22d3ee" />
                 </linearGradient>
             </defs>
-            {/* Track */}
             <circle cx="160" cy="160" r={radius} stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="transparent" />
-            {/* Progress */}
             <circle 
               cx="160" cy="160" r={radius} stroke="url(#focus-gradient)" strokeWidth="8" fill="transparent" 
               strokeDasharray={circumference} 

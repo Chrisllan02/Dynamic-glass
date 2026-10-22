@@ -27,9 +27,9 @@ export interface TechFactData {
 export interface CalendarEvent {
   id: string;
   title: string;
-  date: string; // YYYY-MM-DD
+  date: string;
   completed?: boolean;
-  time?: string; // HH:mm optional
+  time?: string;
 }
 
 export type Priority = 'high' | 'medium' | 'low';
@@ -42,7 +42,7 @@ export interface TodoTask {
   completedAt?: number;
   priority?: Priority;
   category?: string;
-  time?: string; // HH:mm
+  time?: string;
 }
 
 export interface Reminder {
@@ -82,7 +82,7 @@ export type ClockSize = 'small' | 'medium' | 'large' | 'huge' | 'massive';
 
 export interface ClockConfig {
   format: '12h' | '24h';
-  scale: number; // 0.5 to 1.5
+  scale: number;
   position: ClockPosition;
   fontWeight: ClockWeight;
   font: ClockFont;
@@ -93,7 +93,7 @@ export interface ClockConfig {
 export interface DailyForecast {
   date: string;
   dayName: string;
-  day: string; // Add day property
+  day: string;
   minTemp: number;
   maxTemp: number;
   weatherCode: number;

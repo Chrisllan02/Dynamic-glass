@@ -19,10 +19,9 @@ export const InfoCarousel: React.FC<InfoCarouselProps> = ({ isDarkMode, activeMo
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
 
-  const SLIDE_DURATION = 8000; // 8 seconds per slide
-  const UPDATE_FREQ = 50; // Smoother updates (50ms)
+  const SLIDE_DURATION = 8000;
+  const UPDATE_FREQ = 50;
 
-  // Reset index if modules change
   useEffect(() => {
     if (currentIndex >= activeModules.length) {
       setCurrentIndex(0);
@@ -46,17 +45,14 @@ export const InfoCarousel: React.FC<InfoCarouselProps> = ({ isDarkMode, activeMo
     resetProgress();
   };
 
-  // Automatic Rotation & Progress Bar Logic
   useEffect(() => {
     if (activeModules.length <= 1) return;
 
     if (!isPaused) {
-      // Main rotation timer
       timeoutRef.current = setInterval(() => {
         nextSlide();
       }, SLIDE_DURATION);
 
-      // Progress bar animation
       const step = 100 / (SLIDE_DURATION / UPDATE_FREQ);
       progressIntervalRef.current = setInterval(() => {
         setProgress((prev) => {
@@ -72,7 +68,6 @@ export const InfoCarousel: React.FC<InfoCarouselProps> = ({ isDarkMode, activeMo
     };
   }, [isPaused, activeModules.length, currentIndex]);
 
-  // Touch Handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
     setIsPaused(true);
@@ -91,7 +86,6 @@ export const InfoCarousel: React.FC<InfoCarouselProps> = ({ isDarkMode, activeMo
       if (diff > 0) nextSlide();
       else prevSlide();
     }
-    // Resume after a short delay
     setTimeout(() => setIsPaused(false), 2000);
   };
 
@@ -99,7 +93,6 @@ export const InfoCarousel: React.FC<InfoCarouselProps> = ({ isDarkMode, activeMo
     resetProgress();
     setIsPaused(true);
     setCurrentIndex(idx);
-    // Resume quicker after manual click
     setTimeout(() => setIsPaused(false), 3000);
   };
 
@@ -114,7 +107,6 @@ export const InfoCarousel: React.FC<InfoCarouselProps> = ({ isDarkMode, activeMo
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
     >
-       {/* Navigation Arrows */}
        {activeModules.length > 1 && (
           <>
             <button
@@ -157,10 +149,8 @@ export const InfoCarousel: React.FC<InfoCarouselProps> = ({ isDarkMode, activeMo
           </>
        )}
 
-       {/* Viewport - overflow-hidden masks neighbors */}
        <div className="w-full relative overflow-hidden z-10"> 
           
-          {/* Sliding Track */}
           <div 
             className="flex w-full transition-transform duration-[700ms] ease-[cubic-bezier(0.2,0.8,0.2,1)]"
             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -169,12 +159,8 @@ export const InfoCarousel: React.FC<InfoCarouselProps> = ({ isDarkMode, activeMo
                 const isActive = index === currentIndex;
                 
                 return (
-                  // Slide Item Wrapper
-                  // px-3: Reduced spacing
-                  // Changed from min-w-full to w-full to strictly enforce width and prevent content expansion
                   <div key={`${moduleId}-${index}`} className="w-full flex-shrink-0 relative px-3 py-3 box-border"> 
                        
-                       {/* Fixed Height: h-40 (160px) to prevent cutoff of longer text cards */}
                        <div className="relative w-full h-40">
                            <GlassCard className={`
                               w-full h-full flex items-center justify-center relative 
@@ -186,7 +172,6 @@ export const InfoCarousel: React.FC<InfoCarouselProps> = ({ isDarkMode, activeMo
                               }
                               transition-all duration-500
                            `}>
-                              {/* Content Container */}
                               <div className="w-full h-full flex items-center justify-center">
                                  <SmartWidget 
                                     id={moduleId} 
@@ -196,11 +181,9 @@ export const InfoCarousel: React.FC<InfoCarouselProps> = ({ isDarkMode, activeMo
                               </div>
                            </GlassCard>
 
-                           {/* SVG Border Progress */}
                            <svg 
                              className={`absolute inset-0 w-full h-full pointer-events-none z-20 rounded-[24px] overflow-visible transition-opacity duration-500 ${isActive ? 'opacity-100' : 'opacity-0'}`}
                            >
-                             {/* Background Track */}
                              <rect
                                 x="1" y="1" width="calc(100% - 2px)" height="calc(100% - 2px)"
                                 rx="24" ry="24"
@@ -209,7 +192,6 @@ export const InfoCarousel: React.FC<InfoCarouselProps> = ({ isDarkMode, activeMo
                                 strokeWidth="1"
                              />
                              
-                             {/* Animated Progress Stroke */}
                              <rect
                                 x="1" y="1" width="calc(100% - 2px)" height="calc(100% - 2px)"
                                 rx="24" ry="24"
@@ -233,7 +215,6 @@ export const InfoCarousel: React.FC<InfoCarouselProps> = ({ isDarkMode, activeMo
           </div>
        </div>
 
-       {/* Pagination Dots */}
        {activeModules.length > 1 && (
           <div className="flex justify-center items-center gap-2 -mt-1 z-20">
              {activeModules.map((_, idx) => (

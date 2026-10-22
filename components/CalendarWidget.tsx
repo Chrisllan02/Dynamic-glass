@@ -12,47 +12,40 @@ interface CalendarWidgetProps {
 
 export const CalendarWidget: React.FC<CalendarWidgetProps> = ({ isDarkMode, focusMode = false }) => {
   const [expanded, setExpanded] = useState(false);
-  const [currentDate, setCurrentDate] = useState(new Date()); // Real "Now"
-  const [displayDate, setDisplayDate] = useState(new Date()); // Navigation View
-  const [selectedDate, setSelectedDate] = useState(new Date()); // User Selection
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [displayDate, setDisplayDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
   
   const [events, setEvents] = useState<Record<string, CalendarEvent[]>>({});
   const [newEventTitle, setNewEventTitle] = useState('');
   
-  // ICS Import State
   const [showImport, setShowImport] = useState(false);
   const [icsUrl, setIcsUrl] = useState('');
   const [isImporting, setIsImporting] = useState(false);
 
-  // Auto-collapse
   useEffect(() => {
     setExpanded(false);
     setShowImport(false);
   }, [focusMode]);
 
-  // Load Events
   useEffect(() => {
     const loadEvents = async () => {
         const savedEvents = await storage.get<Record<string, CalendarEvent[]>>(STORAGE_KEYS.CALENDAR_EVENTS);
         if (savedEvents) setEvents(savedEvents);
         
-        // Auto-refresh ICS if configured (Logic could be added here later)
     };
     loadEvents();
   }, []);
 
-  // Save Events
   const saveEvents = (updatedEvents: Record<string, CalendarEvent[]>) => {
       setEvents(updatedEvents);
       storage.set(STORAGE_KEYS.CALENDAR_EVENTS, updatedEvents);
   };
 
-  // Helper: Date Key YYYY-MM-DD
   const getDateKey = (date: Date) => {
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   };
 
-  // --- ICS PARSER ENGINE ---
   const parseICS = (icsData: string) => {
       const newEvents: Record<string, CalendarEvent[]> = { ...events };
       const lines = icsData.split(/\r\n|\n|\r/);
@@ -60,7 +53,6 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({ isDarkMode, focu
       let currentEvent: any = {};
 
       const formatDateKey = (icsDate: string) => {
-          // Format: 20231025T143000Z or 20231025
           if (!icsDate) return null;
           const year = icsDate.substring(0, 4);
           const month = icsDate.substring(4, 6);
@@ -78,7 +70,6 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({ isDarkMode, focu
                   const key = formatDateKey(currentEvent.DTSTART);
                   if (key) {
                       if (!newEvents[key]) newEvents[key] = [];
-                      // Prevent duplicates
                       const exists = newEvents[key].some(e => e.title === currentEvent.SUMMARY);
                       if (!exists) {
                           newEvents[key].push({
@@ -108,8 +99,6 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({ isDarkMode, focu
       uiSounds.click();
 
       try {
-          // Bypass CORS if possible or hope for the best (Works with many public Google Calendars)
-          // Note: In a real production extension, we'd use the background script to fetch to avoid CORS fully.
           const response = await fetch(icsUrl);
           if (!response.ok) throw new Error("Falha ao baixar calendário");
           
@@ -294,7 +283,6 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({ isDarkMode, focu
             `}>
                 <div className="p-5 animate-[fadeIn_0.3s_ease-out_0.1s_both] cursor-default" onClick={(e) => e.stopPropagation()}>
                     
-                    {/* Month Navigator */}
                     <div className="flex items-center justify-between mb-5">
                         <button onClick={handlePrevMonth} className={`p-1.5 rounded-full transition-colors ${btnHover} ${textSecondary} flex items-center`}>
                              <span className="material-symbols-outlined !text-[20px]">chevron_left</span>
@@ -307,7 +295,6 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({ isDarkMode, focu
                         </button>
                     </div>
 
-                    {/* Grid */}
                     <div className="grid grid-cols-7 gap-1.5 text-center mb-5">
                         {weekDays.map((day, i) => (
                             <div key={i} className={`text-[9px] font-bold opacity-50 mb-2 ${textPrimary}`}>{day}</div>
@@ -335,7 +322,6 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({ isDarkMode, focu
                         })}
                     </div>
                     
-                    {/* Events Section */}
                     <div className={`pt-4 border-t ${isDarkMode ? 'border-white/20' : 'border-black/10'}`}>
                         <div className="flex justify-between items-center mb-3">
                             <h3 className={`text-[10px] font-bold uppercase tracking-widest ${textSecondary}`}>
@@ -349,7 +335,6 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({ isDarkMode, focu
                             </button>
                         </div>
 
-                        {/* Import ICS Form */}
                         {showImport && (
                             <div className="mb-4 animate-[fadeIn_0.3s_ease-out]">
                                 <form onSubmit={handleImportICS} className="flex flex-col gap-2">

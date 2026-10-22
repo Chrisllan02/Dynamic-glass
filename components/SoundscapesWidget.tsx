@@ -207,7 +207,6 @@ export const SoundscapesWidget: React.FC<SoundscapesWidgetProps> = ({ isDarkMode
               </button>
           </div>
           
-          {/* VOLUME SLIDER ANIMADO */}
           <div className="px-2">
             <div className="slider">
                 <span className={`material-symbols-outlined volume-icon ${textSecondary}`}>volume_up</span>

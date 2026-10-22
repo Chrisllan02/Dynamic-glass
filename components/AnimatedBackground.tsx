@@ -8,7 +8,6 @@ import FloatingLines from './FloatingLines';
 import Aurora from './Aurora';
 import GridScan from './GridScan';
 
-// --- THREE.JS IMPORTS FOR NEW BALLPIT ---
 const {
   Clock, PerspectiveCamera, Scene, WebGLRenderer, SRGBColorSpace, MathUtils,
   Vector2, Vector3, MeshPhysicalMaterial, ShaderChunk, Color: ThreeColor, Object3D,
@@ -34,7 +33,6 @@ const THEME_DATA: Record<ThemeId | 'mix', { bg: string, colors: string[], blend:
   weather: { bg: '#000', colors: [], blend: 'screen' }
 };
 
-// --- SPLINE BACKGROUND WITH LOADER ---
 const SplineBackground: React.FC<{ url: string }> = ({ url }) => {
   const [loaded, setLoaded] = useState(false);
 
@@ -68,7 +66,6 @@ const SplineBackground: React.FC<{ url: string }> = ({ url }) => {
   );
 };
 
-// --- UNICORN STUDIO BACKGROUND ---
 const UnicornStudioBackground: React.FC<{ projectId: string }> = ({ projectId }) => {
   useEffect(() => {
     const scriptId = 'unicorn-studio-script';
@@ -113,7 +110,6 @@ const UnicornStudioBackground: React.FC<{ projectId: string }> = ({ projectId })
   );
 };
 
-// --- UNIVERSE THEME (OGL WEBGL SHADER) ---
 const UniverseTheme: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
   const ctnDom = useRef<HTMLDivElement>(null);
 
@@ -126,7 +122,6 @@ const UniverseTheme: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
       dpr: Math.min(window.devicePixelRatio, 2)
     });
     const gl = renderer.gl;
-    // Always black background for space theme
     gl.clearColor(0, 0, 0, 1);
 
     const geometry = new Triangle(gl);
@@ -199,7 +194,7 @@ const UniverseTheme: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
     let animationId: number;
     const update = (t: number) => {
       animationId = requestAnimationFrame(update);
-      program.uniforms.iTime.value = t * 0.002; // Increased speed from 0.001
+      program.uniforms.iTime.value = t * 0.002;
       renderer.render({ scene: mesh });
     };
     animationId = requestAnimationFrame(update);
@@ -236,7 +231,6 @@ const UniverseTheme: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
   );
 };
 
-// --- NEW BALLPIT THEME START ---
 
 class BallpitScene {
   config: any;
@@ -992,15 +986,14 @@ const Ballpit: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Configuração do Ballpit (Optimized Speed)
     const props = {
-        count: 150, // Reduced count for better performance
-        gravity: 2.0, // Increased gravity for faster fall
-        friction: 0.9, // Reduced friction for faster movement
+        count: 150,
+        gravity: 2.0,
+        friction: 0.9,
         wallBounce: 0.95,
-        maxVelocity: 0.5, // Increased max speed
+        maxVelocity: 0.5,
         followCursor: true,
-        colors: [0xef4444, 0xf97316, 0xeab308, 0x22c55e, 0x3b82f6, 0xa855f7, 0xec4899] // Vibrant colors
+        colors: [0xef4444, 0xf97316, 0xeab308, 0x22c55e, 0x3b82f6, 0xa855f7, 0xec4899]
     };
 
     spheresInstanceRef.current = createBallpit(canvas, props);
@@ -1015,7 +1008,6 @@ const Ballpit: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
   return (
     <div className={`absolute inset-0 ${isDarkMode ? 'bg-[#050505]' : 'bg-gray-100'} transition-colors duration-1000`}>
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
-        {/* Credits Legend */}
         <div style={{
             position: 'absolute', 
             bottom: '10px', 
@@ -1033,14 +1025,12 @@ const Ballpit: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
     </div>
   );
 };
-// --- NEW BALLPIT THEME END ---
 
 const AnimatedBackgroundBase: React.FC<{
   theme: ThemeId;
   isDarkMode: boolean;
   animationOverride: AnimationStyle;
 }> = ({ theme, isDarkMode }) => {
-  // === RENDERIZADORES JAVASCRIPT ===
   if (theme === 'default') return <UnicornStudioBackground projectId="yaha7Bz5f3cRBAa5js9K" />;
   if (theme === 'retro') return <Ballpit isDarkMode={isDarkMode} />;
   if (theme === 'book') return <UniverseTheme isDarkMode={isDarkMode} />;
@@ -1051,7 +1041,7 @@ const AnimatedBackgroundBase: React.FC<{
           colorStops={isDarkMode ? ["#3A29FF", "#FF94B4", "#FF3232"] : ["#00d8ff", "#00ff94", "#0066ff"]}
           blend={0.5}
           amplitude={1.0}
-          speed={1.5} // Increased Speed
+          speed={1.5}
         />
         <div style={{
             position: 'absolute', 
@@ -1081,9 +1071,9 @@ const AnimatedBackgroundBase: React.FC<{
             bendStrength={-0.5}
             interactive={true}
             parallax={true}
-            animationSpeed={2.0} // Increased Speed
-            linesGradient={['#4338ca', '#3b82f6', '#ec4899', '#8b5cf6']} // Matching existing liquid theme colors
-            mixBlendMode={isDarkMode ? 'screen' : 'multiply'} // Adjust for light mode
+            animationSpeed={2.0}
+            linesGradient={['#4338ca', '#3b82f6', '#ec4899', '#8b5cf6']}
+            mixBlendMode={isDarkMode ? 'screen' : 'multiply'}
         />
       </div>
     );
@@ -1093,12 +1083,10 @@ const AnimatedBackgroundBase: React.FC<{
     return <SplineBackground url="https://my.spline.design/3dgradient-AcpgG6LxFkpnJSoowRHPfcbO" />;
   }
 
-  // --- REPLACED: CHROMA/PRISM WITH GRID SCAN ---
   if (theme === 'chroma') {
     return (
       <div style={{ width: '100%', height: '100%', position: 'relative' }}>
         <GridScan
-          enableWebcam={false} // Disabled for background performance
           sensitivity={0.55}
           lineThickness={1}
           linesColor="#392e4e"
@@ -1122,12 +1110,10 @@ const AnimatedBackgroundBase: React.FC<{
     return <UnicornStudioBackground projectId="qF3qXhdiOxdUeQYH8wCK" />;
   }
 
-  // --- REPLACED: MINIMAL RIPPLE THEME WITH SPLINE ---
   if (theme === 'minimal') {
     return <SplineBackground url="https://my.spline.design/glasswave-6HLEnvJfCRsq1aKT2xqlgme7" />;
   }
 
-  // === RENDERIZADORES GENÉRICO (BLOBS) ===
   const themeConfig = THEME_DATA[theme] || THEME_DATA['default'];
 
   return (

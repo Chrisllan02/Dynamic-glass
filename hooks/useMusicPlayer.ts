@@ -4,7 +4,6 @@ import { uiSounds } from '../services/soundService';
 
 declare var chrome: any;
 
-// Fallback visual
 const DEFAULT_TRACK = { 
     title: 'Aguardando Mídia...', 
     artist: 'Nenhuma aba ativa', 
@@ -14,7 +13,7 @@ const DEFAULT_TRACK = {
 };
 
 export const useMusicPlayer = () => {
-    const audioRef = useRef<HTMLAudioElement | null>(null); // Kept for type safety, unused
+    const audioRef = useRef<HTMLAudioElement | null>(null);
     const [playerState, setPlayerState] = useState({ 
         isPlaying: false, 
         trackIndex: 0, 
@@ -28,7 +27,6 @@ export const useMusicPlayer = () => {
     const [currentTrack, setCurrentTrack] = useState(DEFAULT_TRACK);
     const [connected, setConnected] = useState(false);
 
-    // Polling status from background script
     useEffect(() => {
         if (typeof chrome === 'undefined' || !chrome.runtime) return;
 
@@ -49,7 +47,7 @@ export const useMusicPlayer = () => {
                         title: response.title || 'Mídia Externa',
                         artist: response.artist || 'Navegador',
                         src: '',
-                        color: response.isPlaying ? '#22c55e' : '#64748b', // Green if playing
+                        color: response.isPlaying ? '#22c55e' : '#64748b',
                         cover: response.cover || 'https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=300&h=300&fit=crop&q=80'
                     });
                 } else {
@@ -59,8 +57,8 @@ export const useMusicPlayer = () => {
             });
         };
 
-        const interval = setInterval(syncStatus, 1000); // Poll every second
-        syncStatus(); // Initial check
+        const interval = setInterval(syncStatus, 1000);
+        syncStatus();
 
         return () => clearInterval(interval);
     }, []);
@@ -69,7 +67,6 @@ export const useMusicPlayer = () => {
         uiSounds.click();
         if (typeof chrome !== 'undefined' && chrome.runtime) {
             chrome.runtime.sendMessage({ type: 'MEDIA_CONTROL', action, value }, (response: any) => {
-                // Optimistic UI update
                 if (action === 'playPause') {
                     setPlayerState(p => ({ ...p, isPlaying: !p.isPlaying }));
                 }
@@ -98,7 +95,6 @@ export const useMusicPlayer = () => {
     };
 
     const changeVolume = (val: number) => {
-        // Not implemented for external tabs easily due to security, but we keep state
         setPlayerState(p => ({ ...p, volume: val }));
     };
 
@@ -107,7 +103,6 @@ export const useMusicPlayer = () => {
         setPlayerState(p => ({ ...p, isShuffle: !p.isShuffle }));
     };
 
-    // Stubs for compatibility
     const handleTimeUpdate = () => {};
     const handleLoadedMetadata = () => {};
     const onTrackEnded = () => {};

@@ -24,7 +24,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({ isDarkMode = true }) => {
     const timer = setTimeout(async () => {
         const results: { text: string, type: 'google' | 'bookmark', url?: string }[] = [];
         
-        // 1. Search Bookmarks first (if available)
         // @ts-ignore
         if (typeof chrome !== 'undefined' && chrome.bookmarks) {
              // @ts-ignore
