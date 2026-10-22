@@ -68,25 +68,8 @@ const SplineBackground: React.FC<{ url: string }> = ({ url }) => {
 
 const UnicornStudioBackground: React.FC<{ projectId: string }> = ({ projectId }) => {
   useEffect(() => {
-    const scriptId = 'unicorn-studio-script';
-    
-    const initUnicorn = () => {
-        // @ts-ignore
-        if (window.UnicornStudio) {
-            // @ts-ignore
-            window.UnicornStudio.init();
-        }
-    };
-
-    if (!document.getElementById(scriptId)) {
-        const script = document.createElement("script");
-        script.id = scriptId;
-        script.src = "https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v1.4.29/dist/unicornStudio.umd.js";
-        script.onload = initUnicorn;
-        document.head.appendChild(script);
-    } else {
-        setTimeout(initUnicorn, 100);
-    }
+    const timer = setTimeout(() => UnicornStudio.init(), 100);
+    return () => clearTimeout(timer);
   }, [projectId]);
 
   return (

@@ -5,6 +5,7 @@ import { uiSounds } from '../services/soundService';
 import { useMusicPlayer } from '../hooks/useMusicPlayer';
 import { useIslandTools } from '../hooks/useIslandTools';
 import { getChatResponse } from '../services/geminiService';
+import { evaluateExpression } from '../src/lib/evaluateExpression';
 import { storage, STORAGE_KEYS } from '../services/storageService';
 
 interface DynamicIslandProps {
@@ -219,7 +220,7 @@ export const DynamicIsland: React.FC<DynamicIslandProps> = ({ isDarkMode = true,
       } else if (val === '=') {
           try {
               const cleanExp = calcDisplay.replace(/[^0-9+\-*/().]/g, '');
-              const res = new Function('return ' + cleanExp)();
+              const res = evaluateExpression(cleanExp);
               setCalcHistory(calcDisplay + ' =');
               setCalcDisplay(String(res));
               uiSounds.success();
